@@ -1,0 +1,24 @@
+# Products — 18 active (migrate to `product` CPT)
+# URL pattern: /products/{product_type}/{slug}/
+
+# Hardware (11)
+https://irisid.com/products/hardware-products/irisaccess-ia1000/
+https://irisid.com/products/hardware-products/irisaccess-it100/
+https://irisid.com/products/hardware-products/ibar-600e/
+https://irisid.com/products/hardware-products/icam-d2000/
+https://irisid.com/products/hardware-products/icam-td200/
+https://irisid.com/products/hardware-products/icam-t10/
+https://irisid.com/products/hardware-products/icam-t20/
+https://irisid.com/products/hardware-products/icam-m300/
+https://irisid.com/products/hardware-products/icam-r100-series/
+https://irisid.com/products/hardware-products/icam-r200/
+https://irisid.com/products/hardware-products/ou500/
+
+# Software (7)
+https://irisid.com/products/software-products/iams/
+https://irisid.com/products/software-products/itms/
+https://irisid.com/products/software-products/itms-cloud/
+https://irisid.com/products/software-products/idata-eac/
+https://irisid.com/products/software-products/idata-iris-sdk/
+https://irisid.com/products/software-products/irisaccelerator/
+https://irisid.com/products/software-products/irisaccelerator-m/

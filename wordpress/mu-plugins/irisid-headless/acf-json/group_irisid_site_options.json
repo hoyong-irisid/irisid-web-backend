@@ -1,0 +1,69 @@
+{
+  "key": "group_irisid_site_options",
+  "title": "Site Settings",
+  "fields": [
+    {
+      "key": "field_irisid_opt_header_logo",
+      "label": "Header Logo",
+      "name": "header_logo",
+      "type": "image",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "headerLogo"
+    },
+    {
+      "key": "field_irisid_opt_header_cta",
+      "label": "Header CTA",
+      "name": "header_cta",
+      "type": "link",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "headerCta"
+    },
+    {
+      "key": "field_irisid_opt_kb_url",
+      "label": "Knowledge Base URL (Salesforce)",
+      "name": "knowledge_base_url",
+      "type": "url",
+      "instructions": "External Salesforce KB — not hosted on irisid.com",
+      "show_in_graphql": 1,
+      "graphql_field_name": "knowledgeBaseUrl"
+    },
+    {
+      "key": "field_irisid_opt_contact_phone",
+      "label": "Phone",
+      "name": "contact_phone",
+      "type": "text",
+      "show_in_graphql": 1,
+      "graphql_field_name": "contactPhone"
+    },
+    {
+      "key": "field_irisid_opt_contact_email",
+      "label": "Email",
+      "name": "contact_email",
+      "type": "email",
+      "show_in_graphql": 1,
+      "graphql_field_name": "contactEmail"
+    },
+    {
+      "key": "field_irisid_opt_footer_copy",
+      "label": "Copyright",
+      "name": "copyright",
+      "type": "text",
+      "show_in_graphql": 1,
+      "graphql_field_name": "copyright"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "options_page",
+        "operator": "==",
+        "value": "irisid-site-settings"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "siteSettingsFields"
+}

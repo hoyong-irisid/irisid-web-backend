@@ -1,0 +1,133 @@
+# Issue에 작업을 적으면 → iMac self-hosted runner → Cursor CLI → 테스트 → 커밋 → 알림
+#
+# 트리거: 이슈에 `agent-task` 라벨이 붙을 때 (또는 수동 실행)
+# 문서: docs/ARCHITECTURE.md
+
+name: Agent from GitHub Issue
+
+on:
+  issues:
+    types: [labeled, opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to run (manual run)"
+        required: true
+        type: number
+      target_repo:
+        description: "owner/repo to checkout (default: this repo)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  agent:
+    # iMac self-hosted runner — labels: self-hosted, irisid-imac
+    runs-on: [self-hosted, irisid-imac]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'agent-task') ||
+      (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'agent-task'))
+    timeout-minutes: 45
+    steps:
+      - name: Resolve issue number
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "number=${{ inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch issue details
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE=$(gh issue view "${{ steps.meta.outputs.number }}" --json title,body,url,labels)
+          echo "title=$(echo "$ISSUE" | jq -r .title)" >> "$GITHUB_OUTPUT"
+          echo "body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$ISSUE" | jq -r .body >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "url=$(echo "$ISSUE" | jq -r .url)" >> "$GITHUB_OUTPUT"
+
+      - name: Comment — run started
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment "${{ steps.meta.outputs.number }}" --body "\
+          🤖 **Agent run started** (workflow [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))\
+          "
+
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ inputs.target_repo || github.repository }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Cursor CLI
+        run: bash scripts/ci/install-cursor-cli.sh
+
+      - name: Run Cursor agent (file edits only)
+        id: agent
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ISSUE_NUMBER: ${{ steps.meta.outputs.number }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+          ISSUE_BODY: ${{ steps.issue.outputs.body }}
+          ISSUE_URL: ${{ steps.issue.outputs.url }}
+        run: bash scripts/ci/run-agent-from-issue.sh
+
+      - name: Run tests
+        id: test
+        run: bash scripts/ci/run-tests.sh
+
+      - name: Commit and push changes
+        id: git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/commit-and-push.sh "${{ steps.meta.outputs.number }}"
+
+      - name: Notify email and Telegram
+        if: always()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_FROM: ${{ vars.REPORT_EMAIL_FROM }}
+          REPORT_EMAIL_TO: ${{ vars.REPORT_EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WORKFLOW_STATUS: ${{ job.status }}
+          AGENT_SUMMARY: ${{ steps.agent.outputs.summary }}
+          TEST_SUMMARY: ${{ steps.test.outputs.summary }}
+          GIT_SUMMARY: ${{ steps.git.outputs.summary }}
+          ISSUE_URL: ${{ steps.issue.outputs.url }}
+        run: npx tsx scripts/ci/notify-workflow.ts
+
+      - name: Comment — run finished
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STATUS="${{ job.status }}"
+          ICON=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+          gh issue comment "${{ steps.meta.outputs.number }}" --body "\
+          ${ICON} **Agent run ${STATUS}**
+
+          - Agent: ${{ steps.agent.outputs.summary || '—' }}
+          - Tests: ${{ steps.test.outputs.summary || '—' }}
+          - Git: ${{ steps.git.outputs.summary || '—' }}
+          - [Workflow log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\
+          "

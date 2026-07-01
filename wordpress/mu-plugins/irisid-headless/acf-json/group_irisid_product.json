@@ -1,0 +1,215 @@
+{
+  "key": "group_irisid_product",
+  "title": "Product Fields",
+  "fields": [
+    {
+      "key": "field_irisid_product_subtitle",
+      "label": "Subtitle",
+      "name": "subtitle",
+      "type": "text",
+      "show_in_graphql": 1,
+      "graphql_field_name": "subtitle"
+    },
+    {
+      "key": "field_irisid_product_short_desc",
+      "label": "Short Description",
+      "name": "short_description",
+      "type": "textarea",
+      "rows": 3,
+      "show_in_graphql": 1,
+      "graphql_field_name": "shortDescription"
+    },
+    {
+      "key": "field_irisid_product_hero",
+      "label": "Hero Image",
+      "name": "hero_image",
+      "type": "image",
+      "return_format": "array",
+      "preview_size": "medium",
+      "show_in_graphql": 1,
+      "graphql_field_name": "heroImage"
+    },
+    {
+      "key": "field_irisid_product_gallery",
+      "label": "Gallery",
+      "name": "gallery",
+      "type": "gallery",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "gallery"
+    },
+    {
+      "key": "field_irisid_product_badge",
+      "label": "Status Badge",
+      "name": "status_badge",
+      "type": "select",
+      "choices": {
+        "new": "New",
+        "flagship": "Flagship",
+        "legacy": "Legacy"
+      },
+      "allow_null": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "statusBadge"
+    },
+    {
+      "key": "field_irisid_product_features",
+      "label": "Key Features",
+      "name": "key_features",
+      "type": "repeater",
+      "layout": "block",
+      "button_label": "Add Feature",
+      "show_in_graphql": 1,
+      "graphql_field_name": "keyFeatures",
+      "sub_fields": [
+        {
+          "key": "field_irisid_product_feat_icon",
+          "label": "Icon",
+          "name": "icon",
+          "type": "image",
+          "return_format": "array",
+          "show_in_graphql": 1,
+          "graphql_field_name": "icon"
+        },
+        {
+          "key": "field_irisid_product_feat_title",
+          "label": "Title",
+          "name": "title",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "title"
+        },
+        {
+          "key": "field_irisid_product_feat_text",
+          "label": "Text",
+          "name": "text",
+          "type": "textarea",
+          "rows": 2,
+          "show_in_graphql": 1,
+          "graphql_field_name": "text"
+        }
+      ]
+    },
+    {
+      "key": "field_irisid_product_specs",
+      "label": "Specifications",
+      "name": "specifications",
+      "type": "repeater",
+      "layout": "table",
+      "button_label": "Add Spec",
+      "show_in_graphql": 1,
+      "graphql_field_name": "specifications",
+      "sub_fields": [
+        {
+          "key": "field_irisid_product_spec_label",
+          "label": "Label",
+          "name": "spec_label",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "specLabel"
+        },
+        {
+          "key": "field_irisid_product_spec_value",
+          "label": "Value",
+          "name": "spec_value",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "specValue"
+        }
+      ]
+    },
+    {
+      "key": "field_irisid_product_spec_sheet",
+      "label": "Spec Sheet PDF",
+      "name": "spec_sheet",
+      "type": "file",
+      "return_format": "array",
+      "mime_types": "pdf",
+      "show_in_graphql": 1,
+      "graphql_field_name": "specSheet"
+    },
+    {
+      "key": "field_irisid_product_dl",
+      "label": "Related Downloads",
+      "name": "related_downloads",
+      "type": "relationship",
+      "post_type": ["download"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedDownloads"
+    },
+    {
+      "key": "field_irisid_product_solutions",
+      "label": "Related Solutions",
+      "name": "related_solutions",
+      "type": "relationship",
+      "post_type": ["solution"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedSolutions"
+    },
+    {
+      "key": "field_irisid_product_related",
+      "label": "Related Products",
+      "name": "related_products",
+      "type": "relationship",
+      "post_type": ["product"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedProducts"
+    },
+    {
+      "key": "field_irisid_product_video",
+      "label": "Video URL",
+      "name": "video_url",
+      "type": "url",
+      "show_in_graphql": 1,
+      "graphql_field_name": "videoUrl"
+    },
+    {
+      "key": "field_irisid_product_cta",
+      "label": "CTA",
+      "name": "cta",
+      "type": "group",
+      "layout": "block",
+      "show_in_graphql": 1,
+      "graphql_field_name": "cta",
+      "sub_fields": [
+        {
+          "key": "field_irisid_product_cta_label",
+          "label": "Label",
+          "name": "label",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "label"
+        },
+        {
+          "key": "field_irisid_product_cta_link",
+          "label": "Link",
+          "name": "link",
+          "type": "link",
+          "return_format": "array",
+          "show_in_graphql": 1,
+          "graphql_field_name": "link"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "product"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "productFields"
+}

@@ -1,0 +1,11 @@
+from_url,to_url,notes
+https://irisid.com/discontinued/icam-d1000/,https://irisid.com/discontinued/,discontinued hub
+https://irisid.com/discontinued/ou7s-ak/,https://irisid.com/discontinued/,discontinued hub
+https://irisid.com/icu-7000-2/,https://irisid.com/discontinued/,legacy model
+https://irisid.com/ou75/,https://irisid.com/discontinued/,legacy model
+https://irisid.com/en-espanol/,https://irisid.com/,legacy locale → n8n i18n
+https://irisid.com/korean/,https://irisid.com/,legacy locale → n8n i18n
+https://irisid.com/support/rmarequest/,https://irisid.com/support/rma-request/,duplicate URL
+https://irisid.com/licensing-2/,https://irisid.com/licensing/,duplicate URL
+https://irisid.com/i-vs-f/,https://irisid.com/solutions/iris-recognition-vs-facial-authentication/,duplicate URL
+https://irisid.com/iris-vs-face/,https://irisid.com/solutions/iris-recognition-vs-facial-authentication/,duplicate URL

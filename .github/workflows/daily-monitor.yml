@@ -1,0 +1,75 @@
+name: Daily Iris ID Monitor
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    # 24/7: iMac self-hosted runner 권장 (Playwright·사이트 접근 안정)
+    # runner 없으면 ubuntu-latest로 폴백하려면 runs-on을 ubuntu-latest로 변경
+    runs-on: [self-hosted, irisid-imac]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: "0"
+        run: npx playwright install chromium
+
+      - name: Run daily monitor
+        id: monitor
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://irisid.com' }}
+          SITE_NAME: Iris ID
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: hoyong-irisid
+          GITHUB_REPO: monitoring
+          GITHUB_ISSUES_ENABLED: "true"
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_FROM: ${{ vars.REPORT_EMAIL_FROM }}
+          REPORT_EMAIL_TO: ${{ vars.REPORT_EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FORM_SUBMIT_ENABLED: ${{ vars.FORM_SUBMIT_ENABLED || 'false' }}
+          FORM_TEST_EMAIL: ${{ vars.FORM_TEST_EMAIL }}
+          MAX_CRAWL_PAGES: ${{ vars.MAX_CRAWL_PAGES || '80' }}
+          CRAWL_DEPTH: ${{ vars.CRAWL_DEPTH || '2' }}
+          HEADLESS: "true"
+          DRY_RUN: "false"
+        run: npm run monitor
+
+      - name: Notify on monitor failure
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_FROM: ${{ vars.REPORT_EMAIL_FROM }}
+          REPORT_EMAIL_TO: ${{ vars.REPORT_EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WORKFLOW_STATUS: failure
+          WORKFLOW_NAME: Daily Iris ID Monitor
+          AGENT_SUMMARY: Monitor job failed — see workflow logs
+        run: npx tsx scripts/ci/notify-workflow.ts
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-report-${{ github.run_id }}
+          path: reports/
+          retention-days: 30

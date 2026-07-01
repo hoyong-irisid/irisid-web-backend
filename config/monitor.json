@@ -1,0 +1,48 @@
+{
+  "priorityPages": [
+    "/",
+    "/company/",
+    "/company/about-iris-id/",
+    "/company/contact-us/",
+    "/company/careers/",
+    "/products/",
+    "/products/hardware-products/",
+    "/products/software-products/",
+    "/faq/",
+    "/privacy/",
+    "/legal/"
+  ],
+  "seedPaths": [
+    "/",
+    "/company/contact-us/",
+    "/products/",
+    "/faq/"
+  ],
+  "forms": [
+    {
+      "id": "contact-us",
+      "pageUrl": "/company/contact-us/",
+      "formSelector": "form",
+      "fields": [
+        { "selector": "input[name*='name'], input[id*='name'], input[placeholder*='Name']", "value": "{{FORM_TEST_NAME}}" },
+        { "selector": "input[type='email'], input[name*='email'], input[name*='mail']", "value": "{{FORM_TEST_EMAIL}}" },
+        { "selector": "textarea", "value": "{{FORM_TEST_MESSAGE}}" }
+      ],
+      "successTextIncludes": ["thank", "received", "success", "sent"]
+    }
+  ],
+  "skipUrlPatterns": [
+    "/wp-admin",
+    "/wp-login",
+    "/cart",
+    "/checkout",
+    "mailto:",
+    "tel:",
+    "javascript:",
+    "#",
+    ".pdf",
+    ".zip",
+    ".doc"
+  ],
+  "contentFixes": []
+}

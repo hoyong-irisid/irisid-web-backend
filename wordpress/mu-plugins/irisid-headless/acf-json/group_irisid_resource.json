@@ -1,0 +1,99 @@
+{
+  "key": "group_irisid_resource",
+  "title": "Resource Fields",
+  "fields": [
+    {
+      "key": "field_irisid_resource_excerpt",
+      "label": "Excerpt",
+      "name": "excerpt",
+      "type": "textarea",
+      "rows": 3,
+      "show_in_graphql": 1,
+      "graphql_field_name": "excerpt"
+    },
+    {
+      "key": "field_irisid_resource_featured",
+      "label": "Featured Image",
+      "name": "featured_image",
+      "type": "image",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "featuredImage"
+    },
+    {
+      "key": "field_irisid_resource_body",
+      "label": "Body",
+      "name": "body",
+      "type": "wysiwyg",
+      "show_in_graphql": 1,
+      "graphql_field_name": "body"
+    },
+    {
+      "key": "field_irisid_resource_external",
+      "label": "External URL",
+      "name": "external_url",
+      "type": "url",
+      "show_in_graphql": 1,
+      "graphql_field_name": "externalUrl"
+    },
+    {
+      "key": "field_irisid_resource_video",
+      "label": "Video Embed",
+      "name": "video_embed",
+      "type": "oembed",
+      "show_in_graphql": 1,
+      "graphql_field_name": "videoEmbed"
+    },
+    {
+      "key": "field_irisid_resource_attachment",
+      "label": "Attachment (PDF)",
+      "name": "attachment",
+      "type": "file",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "attachment"
+    },
+    {
+      "key": "field_irisid_resource_event_date",
+      "label": "Event Date",
+      "name": "event_date",
+      "type": "date_picker",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "show_in_graphql": 1,
+      "graphql_field_name": "eventDate"
+    },
+    {
+      "key": "field_irisid_resource_products",
+      "label": "Related Products",
+      "name": "related_products",
+      "type": "relationship",
+      "post_type": ["product"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedProducts"
+    },
+    {
+      "key": "field_irisid_resource_solutions",
+      "label": "Related Solutions",
+      "name": "related_solutions",
+      "type": "relationship",
+      "post_type": ["solution"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedSolutions"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "resource"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "resourceFields"
+}

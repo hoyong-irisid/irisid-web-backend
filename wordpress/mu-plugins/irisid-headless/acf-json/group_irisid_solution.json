@@ -1,0 +1,156 @@
+{
+  "key": "group_irisid_solution",
+  "title": "Solution Fields",
+  "fields": [
+    {
+      "key": "field_irisid_solution_headline",
+      "label": "Headline",
+      "name": "headline",
+      "type": "text",
+      "show_in_graphql": 1,
+      "graphql_field_name": "headline"
+    },
+    {
+      "key": "field_irisid_solution_intro",
+      "label": "Intro",
+      "name": "intro",
+      "type": "wysiwyg",
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "show_in_graphql": 1,
+      "graphql_field_name": "intro"
+    },
+    {
+      "key": "field_irisid_solution_hero",
+      "label": "Hero Image",
+      "name": "hero_image",
+      "type": "image",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "heroImage"
+    },
+    {
+      "key": "field_irisid_solution_challenges",
+      "label": "Challenges",
+      "name": "challenges",
+      "type": "repeater",
+      "layout": "block",
+      "show_in_graphql": 1,
+      "graphql_field_name": "challenges",
+      "sub_fields": [
+        {
+          "key": "field_irisid_solution_ch_title",
+          "label": "Title",
+          "name": "title",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "title"
+        },
+        {
+          "key": "field_irisid_solution_ch_text",
+          "label": "Text",
+          "name": "text",
+          "type": "textarea",
+          "rows": 3,
+          "show_in_graphql": 1,
+          "graphql_field_name": "text"
+        }
+      ]
+    },
+    {
+      "key": "field_irisid_solution_body",
+      "label": "Solution Body",
+      "name": "solution_body",
+      "type": "wysiwyg",
+      "show_in_graphql": 1,
+      "graphql_field_name": "solutionBody"
+    },
+    {
+      "key": "field_irisid_solution_stats",
+      "label": "Stats",
+      "name": "stats",
+      "type": "repeater",
+      "layout": "table",
+      "show_in_graphql": 1,
+      "graphql_field_name": "stats",
+      "sub_fields": [
+        {
+          "key": "field_irisid_solution_stat_value",
+          "label": "Value",
+          "name": "value",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "value"
+        },
+        {
+          "key": "field_irisid_solution_stat_label",
+          "label": "Label",
+          "name": "label",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "label"
+        }
+      ]
+    },
+    {
+      "key": "field_irisid_solution_products",
+      "label": "Featured Products",
+      "name": "featured_products",
+      "type": "relationship",
+      "post_type": ["product"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "featuredProducts"
+    },
+    {
+      "key": "field_irisid_solution_resources",
+      "label": "Related Resources",
+      "name": "related_resources",
+      "type": "relationship",
+      "post_type": ["resource"],
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedResources"
+    },
+    {
+      "key": "field_irisid_solution_cta",
+      "label": "CTA",
+      "name": "cta",
+      "type": "group",
+      "show_in_graphql": 1,
+      "graphql_field_name": "cta",
+      "sub_fields": [
+        {
+          "key": "field_irisid_solution_cta_label",
+          "label": "Label",
+          "name": "label",
+          "type": "text",
+          "show_in_graphql": 1,
+          "graphql_field_name": "label"
+        },
+        {
+          "key": "field_irisid_solution_cta_link",
+          "label": "Link",
+          "name": "link",
+          "type": "link",
+          "return_format": "array",
+          "show_in_graphql": 1,
+          "graphql_field_name": "link"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "solution"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "solutionFields"
+}

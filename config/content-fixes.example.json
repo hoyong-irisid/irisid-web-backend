@@ -1,0 +1,11 @@
+[
+  {
+    "id": "sign-in-logs-label",
+    "pageUrl": "https://irisid.com/app/",
+    "selector": "nav, [role='navigation']",
+    "find": "Sign in logs",
+    "replace": "Sign-in logs",
+    "description": "Use hyphenated Sign-in logs in account nav",
+    "enabled": false
+  }
+]

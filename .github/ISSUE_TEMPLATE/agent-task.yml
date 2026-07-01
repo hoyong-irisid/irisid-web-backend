@@ -1,0 +1,39 @@
+name: Agent task (Cursor CLI)
+description: Cursor 에이전트가 자동으로 처리할 작업
+title: "[agent] "
+labels: ["agent-task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        이 이슈에 `agent-task` 라벨이 있으면 **iMac self-hosted runner**에서 Cursor CLI가 실행됩니다.
+        작업 → 테스트 → 커밋/푸시 → 이메일·Telegram 알림.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      description: 에이전트가 무엇을 해야 하는지 한 문장으로
+      placeholder: "예: contact 페이지 폼 성공 메시지 문구를 Thank you로 통일"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: 상세 / 파일 힌트
+      description: URL, 파일 경로, before/after 텍스트 등
+      placeholder: |
+        - Page: https://irisid.com/company/contact-us/
+        - config/monitor.json contentFixes 항목 추가
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 완료 조건
+      options:
+        - label: typecheck 통과
+        - label: monitor:dry 통과
+        - label: 변경 사항 최소화

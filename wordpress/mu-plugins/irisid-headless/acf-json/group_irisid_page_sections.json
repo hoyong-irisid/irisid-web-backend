@@ -1,0 +1,98 @@
+{
+  "key": "group_irisid_page_sections",
+  "title": "Page Sections",
+  "fields": [
+    {
+      "key": "field_irisid_page_sections",
+      "label": "Sections",
+      "name": "sections",
+      "type": "flexible_content",
+      "button_label": "Add Section",
+      "show_in_graphql": 1,
+      "graphql_field_name": "sections",
+      "layouts": {
+        "layout_irisid_hero": {
+          "key": "layout_irisid_hero",
+          "name": "hero",
+          "label": "Hero",
+          "display": "block",
+          "sub_fields": [
+            { "key": "field_irisid_hero_eyebrow", "label": "Eyebrow", "name": "eyebrow", "type": "text", "show_in_graphql": 1, "graphql_field_name": "eyebrow" },
+            { "key": "field_irisid_hero_heading", "label": "Heading", "name": "heading", "type": "text", "show_in_graphql": 1, "graphql_field_name": "heading" },
+            { "key": "field_irisid_hero_sub", "label": "Subheading", "name": "subheading", "type": "textarea", "rows": 2, "show_in_graphql": 1, "graphql_field_name": "subheading" },
+            { "key": "field_irisid_hero_media", "label": "Media", "name": "media", "type": "image", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "media" },
+            { "key": "field_irisid_hero_cta1", "label": "Primary CTA", "name": "primary_cta", "type": "link", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "primaryCta" },
+            { "key": "field_irisid_hero_cta2", "label": "Secondary CTA", "name": "secondary_cta", "type": "link", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "secondaryCta" }
+          ]
+        },
+        "layout_irisid_card_grid": {
+          "key": "layout_irisid_card_grid",
+          "name": "card_grid",
+          "label": "Card Grid (Hub)",
+          "display": "block",
+          "sub_fields": [
+            { "key": "field_irisid_cg_heading", "label": "Heading", "name": "heading", "type": "text", "show_in_graphql": 1, "graphql_field_name": "heading" },
+            {
+              "key": "field_irisid_cg_cards",
+              "label": "Cards",
+              "name": "cards",
+              "type": "repeater",
+              "layout": "block",
+              "show_in_graphql": 1,
+              "graphql_field_name": "cards",
+              "sub_fields": [
+                { "key": "field_irisid_cg_image", "label": "Image", "name": "image", "type": "image", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "image" },
+                { "key": "field_irisid_cg_title", "label": "Title", "name": "title", "type": "text", "show_in_graphql": 1, "graphql_field_name": "title" },
+                { "key": "field_irisid_cg_text", "label": "Text", "name": "text", "type": "textarea", "rows": 3, "show_in_graphql": 1, "graphql_field_name": "text" },
+                { "key": "field_irisid_cg_link", "label": "Link", "name": "link", "type": "link", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "link" }
+              ]
+            }
+          ]
+        },
+        "layout_irisid_form": {
+          "key": "layout_irisid_form",
+          "name": "form_block",
+          "label": "Gravity Form",
+          "display": "block",
+          "sub_fields": [
+            { "key": "field_irisid_form_heading", "label": "Heading", "name": "heading", "type": "text", "show_in_graphql": 1, "graphql_field_name": "heading" },
+            { "key": "field_irisid_form_id", "label": "Gravity Form ID", "name": "gf_form_id", "type": "number", "required": 1, "show_in_graphql": 1, "graphql_field_name": "gfFormId" }
+          ]
+        },
+        "layout_irisid_product_showcase": {
+          "key": "layout_irisid_product_showcase",
+          "name": "product_showcase",
+          "label": "Product Showcase",
+          "display": "block",
+          "sub_fields": [
+            { "key": "field_irisid_ps_heading", "label": "Heading", "name": "heading", "type": "text", "show_in_graphql": 1, "graphql_field_name": "heading" },
+            { "key": "field_irisid_ps_products", "label": "Products", "name": "products", "type": "relationship", "post_type": ["product"], "return_format": "object", "show_in_graphql": 1, "graphql_field_name": "products" }
+          ]
+        },
+        "layout_irisid_cta_band": {
+          "key": "layout_irisid_cta_band",
+          "name": "cta_band",
+          "label": "CTA Band",
+          "display": "block",
+          "sub_fields": [
+            { "key": "field_irisid_cta_heading", "label": "Heading", "name": "heading", "type": "text", "show_in_graphql": 1, "graphql_field_name": "heading" },
+            { "key": "field_irisid_cta_text", "label": "Text", "name": "text", "type": "textarea", "rows": 2, "show_in_graphql": 1, "graphql_field_name": "text" },
+            { "key": "field_irisid_cta_link", "label": "CTA", "name": "cta", "type": "link", "return_format": "array", "show_in_graphql": 1, "graphql_field_name": "cta" }
+          ]
+        }
+      }
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "page"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "pageSections"
+}

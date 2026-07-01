@@ -1,0 +1,35 @@
+{
+  "key": "group_irisid_faq",
+  "title": "FAQ Fields",
+  "fields": [
+    {
+      "key": "field_irisid_faq_answer",
+      "label": "Answer",
+      "name": "answer",
+      "type": "wysiwyg",
+      "show_in_graphql": 1,
+      "graphql_field_name": "answer"
+    },
+    {
+      "key": "field_irisid_faq_order",
+      "label": "Sort Order",
+      "name": "order",
+      "type": "number",
+      "default_value": 0,
+      "show_in_graphql": 1,
+      "graphql_field_name": "sortOrder"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "faq"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "faqFields"
+}

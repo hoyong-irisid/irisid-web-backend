@@ -1,0 +1,13 @@
+# Solutions — 10 (migrate to `solution` CPT)
+# URL pattern: /solutions/{slug}/
+
+https://irisid.com/solutions/access-control/
+https://irisid.com/solutions/data-centers/
+https://irisid.com/solutions/enterprise-and-corporate-campuses/
+https://irisid.com/solutions/iris-recognition-vs-facial-authentication/
+https://irisid.com/solutions/law-enforcement/
+https://irisid.com/solutions/long-term-care-facilities/
+https://irisid.com/solutions/national-identity/
+https://irisid.com/solutions/public-safety-justice/
+https://irisid.com/solutions/time-attendance/
+https://irisid.com/solutions/transportation-immigration/

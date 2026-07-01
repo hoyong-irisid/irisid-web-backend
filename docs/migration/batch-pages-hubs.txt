@@ -1,0 +1,59 @@
+# Hub, company, support, legal pages → `page` + ACF sections
+# Exclude: products/*, solutions/*, campaigns (see batch-campaigns.txt), discontinued/*
+
+# Home & top-level hubs
+https://irisid.com/
+https://irisid.com/products/
+https://irisid.com/products/hardware-products/
+https://irisid.com/products/software-products/
+https://irisid.com/solutions/
+https://irisid.com/resources/
+https://irisid.com/resources/case-studies/
+https://irisid.com/resources/events/
+https://irisid.com/resources/insights/
+https://irisid.com/resources/iris-id-talk/
+https://irisid.com/resources/literature/
+https://irisid.com/resources/news-media/
+https://irisid.com/resources/press-release/
+https://irisid.com/resources/tip-sheets/
+https://irisid.com/resources/videos/
+https://irisid.com/resources/webinars/
+https://irisid.com/technologies/
+https://irisid.com/technologies/discover-iris-intelligence/
+https://irisid.com/technologies/standards-certificates/
+https://irisid.com/partners/
+https://irisid.com/certifications/
+https://irisid.com/locations/
+https://irisid.com/sales-map/
+https://irisid.com/our-customers-world-map/
+
+# Company
+https://irisid.com/company/
+https://irisid.com/company/about-iris-id/
+https://irisid.com/company/ai-powered-biometrics-technologies/
+https://irisid.com/company/careers/
+https://irisid.com/company/contact-us/
+https://irisid.com/company/iris-recognition-technology/
+https://irisid.com/company/our-customers/
+
+# Support
+https://irisid.com/support/
+https://irisid.com/support/product-registration/
+https://irisid.com/support/rma-request/
+https://irisid.com/support/rmarequest/
+https://irisid.com/support/software-drivers-documentation/
+https://irisid.com/support/software-upgrade-request/
+
+# Legal & policies
+https://irisid.com/legal/
+https://irisid.com/privacy/
+https://irisid.com/faq/
+https://irisid.com/full-rma-terms/
+https://irisid.com/rma-and-repair-policies/
+https://irisid.com/rma-policy-terms-addendum-conditions/
+https://irisid.com/discontinued/
+https://irisid.com/thank-you/
+
+# Deprecated locale (301 → / in Next; optional stub page on cms)
+# https://irisid.com/en-espanol/
+# https://irisid.com/korean/

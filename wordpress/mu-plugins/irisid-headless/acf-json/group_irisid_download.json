@@ -1,0 +1,97 @@
+{
+  "key": "group_irisid_download",
+  "title": "Download Fields",
+  "fields": [
+    {
+      "key": "field_irisid_download_file",
+      "label": "File",
+      "name": "file",
+      "type": "file",
+      "return_format": "array",
+      "required": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "file"
+    },
+    {
+      "key": "field_irisid_download_version",
+      "label": "Version",
+      "name": "version",
+      "type": "text",
+      "show_in_graphql": 1,
+      "graphql_field_name": "version"
+    },
+    {
+      "key": "field_irisid_download_os",
+      "label": "OS / Platform",
+      "name": "os_platform",
+      "type": "select",
+      "choices": {
+        "windows": "Windows",
+        "linux": "Linux",
+        "macos": "macOS",
+        "other": "Other"
+      },
+      "allow_null": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "osPlatform"
+    },
+    {
+      "key": "field_irisid_download_thumb",
+      "label": "Thumbnail",
+      "name": "thumbnail",
+      "type": "image",
+      "return_format": "array",
+      "show_in_graphql": 1,
+      "graphql_field_name": "thumbnail"
+    },
+    {
+      "key": "field_irisid_download_gated",
+      "label": "Gated (form required)",
+      "name": "gated",
+      "type": "true_false",
+      "ui": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "gated"
+    },
+    {
+      "key": "field_irisid_download_gate_form",
+      "label": "Gate Form ID (Gravity Forms)",
+      "name": "gate_form_id",
+      "type": "number",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_download_gated",
+            "operator": "==",
+            "value": "1"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "gateFormId"
+    },
+    {
+      "key": "field_irisid_download_product",
+      "label": "Related Product",
+      "name": "related_product",
+      "type": "relationship",
+      "post_type": ["product"],
+      "max": 1,
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "relatedProduct"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "download"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "downloadFields"
+}

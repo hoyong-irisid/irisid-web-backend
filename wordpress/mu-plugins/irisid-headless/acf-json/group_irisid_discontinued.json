@@ -1,0 +1,82 @@
+{
+  "key": "group_irisid_discontinued",
+  "title": "Discontinued Hub",
+  "fields": [
+    {
+      "key": "field_irisid_disc_intro",
+      "label": "Intro Text",
+      "name": "intro",
+      "type": "wysiwyg",
+      "toolbar": "basic",
+      "show_in_graphql": 1,
+      "graphql_field_name": "intro"
+    },
+    {
+      "key": "field_irisid_disc_items",
+      "label": "Discontinued Products",
+      "name": "discontinued_items",
+      "type": "repeater",
+      "layout": "table",
+      "button_label": "Add Model",
+      "show_in_graphql": 1,
+      "graphql_field_name": "discontinuedItems",
+      "sub_fields": [
+        {
+          "key": "field_irisid_disc_model",
+          "label": "Model Name",
+          "name": "model_name",
+          "type": "text",
+          "required": 1,
+          "show_in_graphql": 1,
+          "graphql_field_name": "modelName"
+        },
+        {
+          "key": "field_irisid_disc_notes",
+          "label": "Notes",
+          "name": "notes",
+          "type": "textarea",
+          "rows": 2,
+          "show_in_graphql": 1,
+          "graphql_field_name": "notes"
+        },
+        {
+          "key": "field_irisid_disc_date",
+          "label": "Discontinued Date",
+          "name": "discontinued_date",
+          "type": "date_picker",
+          "return_format": "Y-m-d",
+          "show_in_graphql": 1,
+          "graphql_field_name": "discontinuedDate"
+        },
+        {
+          "key": "field_irisid_disc_replacement",
+          "label": "Replacement Product",
+          "name": "replacement_product",
+          "type": "relationship",
+          "post_type": ["product"],
+          "max": 1,
+          "return_format": "object",
+          "show_in_graphql": 1,
+          "graphql_field_name": "replacementProduct"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "page"
+      },
+      {
+        "param": "page",
+        "operator": "==",
+        "value": "discontinued"
+      }
+    ]
+  ],
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "discontinuedHub"
+}
