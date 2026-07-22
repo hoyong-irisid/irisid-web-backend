@@ -18,6 +18,7 @@ require_once IRISID_HEADLESS_DIR . '/includes/cpt-taxonomies.php';
 require_once IRISID_HEADLESS_DIR . '/includes/acf-options.php';
 require_once IRISID_HEADLESS_DIR . '/includes/headless-lockdown.php';
 require_once IRISID_HEADLESS_DIR . '/includes/revalidate-webhook.php';
+require_once IRISID_HEADLESS_DIR . '/includes/graphql-upload.php';
 
 add_action('init', 'irisid_register_content_types', 5);
 add_action('acf/init', 'irisid_register_acf_options_pages');
