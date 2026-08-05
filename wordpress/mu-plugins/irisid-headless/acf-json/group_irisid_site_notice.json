@@ -53,12 +53,14 @@
       "key": "field_irisid_notice_display_scope",
       "label": "Display scope",
       "name": "display_scope",
-      "type": "select",
+      "type": "button_group",
       "choices": {
         "home": "Homepage only",
         "sitewide": "Entire site"
       },
       "default_value": "home",
+      "return_format": "value",
+      "layout": "horizontal",
       "required": 1,
       "show_in_graphql": 1,
       "graphql_field_name": "displayScope"
@@ -67,15 +69,54 @@
       "key": "field_irisid_notice_display_style",
       "label": "Display style",
       "name": "display_style",
-      "type": "select",
+      "type": "button_group",
       "choices": {
-        "top_bar": "Top bar (slide in/out)",
+        "top_bar": "Top bar",
         "center_modal": "Center modal"
       },
       "default_value": "top_bar",
+      "return_format": "value",
+      "layout": "horizontal",
       "required": 1,
       "show_in_graphql": 1,
       "graphql_field_name": "displayStyle"
+    },
+    {
+      "key": "field_irisid_notice_background_color",
+      "label": "Background color",
+      "name": "background_color",
+      "type": "color_picker",
+      "instructions": "Bar or modal background. Text color adjusts automatically for contrast.",
+      "default_value": "#e4e4e7",
+      "enable_opacity": 0,
+      "return_format": "string",
+      "show_in_graphql": 1,
+      "graphql_field_name": "backgroundColor"
+    },
+    {
+      "key": "field_irisid_notice_top_bar_layout",
+      "label": "Top bar text layout",
+      "name": "top_bar_layout",
+      "type": "button_group",
+      "instructions": "Stacked: title above body. Inline: title and body on one row.",
+      "choices": {
+        "stacked": "Stacked",
+        "inline": "Inline (side by side)"
+      },
+      "default_value": "stacked",
+      "return_format": "value",
+      "layout": "horizontal",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_notice_display_style",
+            "operator": "==",
+            "value": "top_bar"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "topBarLayout"
     },
     {
       "key": "field_irisid_notice_starts_at",
@@ -110,7 +151,7 @@
     ]
   ],
   "menu_order": 0,
-  "position": "normal",
+  "position": "side",
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
