@@ -1,0 +1,121 @@
+{
+  "key": "group_irisid_site_notice",
+  "title": "Site Notice Fields",
+  "fields": [
+    {
+      "key": "field_irisid_notice_cta_enabled",
+      "label": "Show CTA button",
+      "name": "cta_enabled",
+      "type": "true_false",
+      "instructions": "Add a Learn more / CTA button next to the notice message.",
+      "ui": 1,
+      "default_value": 0,
+      "show_in_graphql": 1,
+      "graphql_field_name": "ctaEnabled"
+    },
+    {
+      "key": "field_irisid_notice_cta_label",
+      "label": "CTA label",
+      "name": "cta_label",
+      "type": "text",
+      "default_value": "Learn more",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_notice_cta_enabled",
+            "operator": "==",
+            "value": "1"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "ctaLabel"
+    },
+    {
+      "key": "field_irisid_notice_cta_url",
+      "label": "CTA URL",
+      "name": "cta_url",
+      "type": "url",
+      "instructions": "Internal path (e.g. /solutions/access-control/) or full URL.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_notice_cta_enabled",
+            "operator": "==",
+            "value": "1"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "ctaUrl"
+    },
+    {
+      "key": "field_irisid_notice_display_scope",
+      "label": "Display scope",
+      "name": "display_scope",
+      "type": "select",
+      "choices": {
+        "home": "Homepage only",
+        "sitewide": "Entire site"
+      },
+      "default_value": "home",
+      "required": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "displayScope"
+    },
+    {
+      "key": "field_irisid_notice_display_style",
+      "label": "Display style",
+      "name": "display_style",
+      "type": "select",
+      "choices": {
+        "top_bar": "Top bar (slide in/out)",
+        "center_modal": "Center modal"
+      },
+      "default_value": "top_bar",
+      "required": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "displayStyle"
+    },
+    {
+      "key": "field_irisid_notice_starts_at",
+      "label": "Show from",
+      "name": "starts_at",
+      "type": "date_time_picker",
+      "instructions": "Optional. Leave empty to start when the notice is published (or scheduled via WordPress).",
+      "display_format": "Y-m-d H:i",
+      "return_format": "Y-m-d H:i:s",
+      "show_in_graphql": 1,
+      "graphql_field_name": "startsAt"
+    },
+    {
+      "key": "field_irisid_notice_ends_at",
+      "label": "Show until",
+      "name": "ends_at",
+      "type": "date_time_picker",
+      "instructions": "Optional. Leave empty for no end date.",
+      "display_format": "Y-m-d H:i",
+      "return_format": "Y-m-d H:i:s",
+      "show_in_graphql": 1,
+      "graphql_field_name": "endsAt"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "site_notice"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "active": true,
+  "show_in_rest": 1,
+  "show_in_graphql": 1,
+  "graphql_field_name": "siteNoticeFields"
+}

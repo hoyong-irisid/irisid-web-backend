@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISID_HEADLESS_VERSION', '1.0.0');
+define('IRISID_HEADLESS_VERSION', '1.1.0');
 define('IRISID_HEADLESS_DIR', __DIR__ . '/irisid-headless');
 
 require_once IRISID_HEADLESS_DIR . '/includes/cpt-taxonomies.php';

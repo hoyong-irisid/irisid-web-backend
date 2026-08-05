@@ -110,6 +110,21 @@ function irisid_register_post_types(): void
         'graphql_single_name' => 'faq',
         'graphql_plural_name' => 'faqs',
     ]));
+
+    register_post_type('site_notice', array_merge($common, [
+        'labels'              => irisid_cpt_labels('Site Notice', 'Site Notices'),
+        'menu_icon'           => 'dashicons-megaphone',
+        // Public enough for unauthenticated REST/GraphQL reads; no front URLs.
+        'public'              => true,
+        'publicly_queryable'  => false,
+        'exclude_from_search' => true,
+        'show_in_nav_menus'   => false,
+        'has_archive'         => false,
+        'supports'            => ['title', 'editor', 'revisions', 'custom-fields'],
+        'rewrite'             => false,
+        'graphql_single_name' => 'siteNotice',
+        'graphql_plural_name' => 'siteNotices',
+    ]));
 }
 
 /** Seed resource_type terms matching live irisid.com archive slugs. */

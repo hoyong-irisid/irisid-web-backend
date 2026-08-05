@@ -31,4 +31,13 @@ mu-plugins/
 2. **Custom Fields → Tools → Sync** (if field groups show "Sync available")
 3. GraphiQL IDE: `https://cms.irisid.com/graphql`
 
+### Site Notices
+
+Admin menu **Site Notices** (`site_notice` CPT) drives the Next.js top bar / center modal.
+
+1. Sync ACF group **Site Notice Fields**
+2. Add a notice → set scope (home / sitewide), style (top bar / modal), optional CTA + start/end
+3. **Publish** now or **Schedule** via the WordPress publish box
+4. Frontend fetches REST `wp/v2/site_notice` (ISR revalidate ~60s)
+
 See [docs/PHASE-1-HEADLESS-WP.md](../docs/PHASE-1-HEADLESS-WP.md) for full checklist.
