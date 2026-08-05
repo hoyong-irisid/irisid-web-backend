@@ -42,3 +42,8 @@ Admin menu **Site Notices** (`site_notice` CPT) drives the Next.js top bar / cen
 5. Frontend fetches REST `wp/v2/site_notice` (no-store + cache-bust)
 
 See [docs/PHASE-1-HEADLESS-WP.md](../docs/PHASE-1-HEADLESS-WP.md) for full checklist.
+
+### Stats at a Glance
+
+Separate mu-plugin: `irisid-stats.php` + `irisid-stats/`. See [docs/STATS-AT-A-GLANCE.md](../docs/STATS-AT-A-GLANCE.md).
+
