@@ -35,8 +35,9 @@
       "key": "field_irisid_notice_cta_url",
       "label": "CTA URL",
       "name": "cta_url",
-      "type": "url",
-      "instructions": "Internal path (e.g. /solutions/access-control/) or full URL.",
+      "type": "text",
+      "instructions": "Internal path (e.g. /resources/events/bmic8-2026/) or full URL (https://…).",
+      "placeholder": "/resources/events/bmic8-2026/",
       "conditional_logic": [
         [
           {
@@ -119,6 +120,24 @@
       "graphql_field_name": "topBarLayout"
     },
     {
+      "key": "field_irisid_notice_text_align",
+      "label": "Text alignment",
+      "name": "text_align",
+      "type": "button_group",
+      "instructions": "Alignment for title and body text.",
+      "choices": {
+        "left": "Left",
+        "center": "Center",
+        "right": "Right"
+      },
+      "default_value": "left",
+      "return_format": "value",
+      "layout": "horizontal",
+      "required": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "textAlign"
+    },
+    {
       "key": "field_irisid_notice_starts_at",
       "label": "Show from",
       "name": "starts_at",
@@ -156,6 +175,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
+  "modified": 1785942800,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "siteNoticeFields"

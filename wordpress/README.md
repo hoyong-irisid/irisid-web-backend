@@ -36,7 +36,7 @@ mu-plugins/
 Admin menu **Site Notices** (`site_notice` CPT) drives the Next.js top bar / center modal.
 
 1. Sync ACF group **Site Notice Fields** (Custom Fields → Field Groups → Sync available)
-2. Edit a notice in the **document sidebar** (field group position: side) — scope, style, background color, top-bar layout (stacked / inline), optional CTA + schedule
+2. Edit a notice in the **document sidebar** (field group position: side) — scope, style, background color, top-bar layout (stacked / inline), text alignment (left / center / right), optional CTA + schedule
 3. **Publish** now or **Schedule** via the WordPress publish box
 4. After Update, reload the edit screen and confirm fields still show the values you chose
 5. Frontend fetches REST `wp/v2/site_notice` (no-store + cache-bust)
