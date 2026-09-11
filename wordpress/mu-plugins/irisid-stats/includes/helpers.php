@@ -10,7 +10,6 @@ if (!defined('ABSPATH')) {
 function irisid_stats_default_settings(): array
 {
     return [
-        'dashboard_password' => 'irisid-stats',
         'dashboard_url'      => 'https://staging.irisid.com/stats/',
         'collect_key'        => '',
         'widgets'            => [

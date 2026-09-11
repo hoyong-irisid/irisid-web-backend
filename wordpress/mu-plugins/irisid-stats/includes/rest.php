@@ -43,10 +43,8 @@ function irisid_stats_rest_check_key(WP_REST_Request $request): bool
     if ($expected === '') {
         return false;
     }
+    // Header only — a query-string fallback would leak this secret into access/CDN logs.
     $provided = (string) $request->get_header('x-irisid-stats-key');
-    if ($provided === '') {
-        $provided = (string) $request->get_param('key');
-    }
     return hash_equals($expected, $provided);
 }
 

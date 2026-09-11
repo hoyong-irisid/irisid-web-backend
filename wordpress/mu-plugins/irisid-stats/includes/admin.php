@@ -46,7 +46,6 @@ function irisid_stats_sanitize_settings($input): array
     }
 
     $settings = [
-        'dashboard_password' => sanitize_text_field((string) ($input['dashboard_password'] ?? $current['dashboard_password'])),
         'dashboard_url'      => esc_url_raw((string) ($input['dashboard_url'] ?? $current['dashboard_url'])),
         'collect_key'        => (string) ($current['collect_key'] ?? ''),
         'widgets'            => $widgets,
@@ -60,6 +59,29 @@ function irisid_stats_sanitize_settings($input): array
         $new_key = wp_generate_password(32, false, false);
         update_option('irisid_stats_collect_key', $new_key);
         $settings['collect_key'] = $new_key;
+    }
+
+    // Password reset field is write-only: it is never pre-filled with the current
+    // value (which is hashed anyway) and only touches the real /admin credential
+    // when the WP admin actually types a new one here.
+    $reset_password = trim((string) ($input['reset_dashboard_password'] ?? ''));
+    if ($reset_password !== '') {
+        if (strlen($reset_password) < 10 || !function_exists('irisid_store_dashboard_password')) {
+            add_settings_error(
+                'irisid_stats_settings',
+                'irisid_stats_password_too_short',
+                'Admin dashboard password was not changed: it must be at least 10 characters.',
+                'error'
+            );
+        } else {
+            irisid_store_dashboard_password($reset_password);
+            add_settings_error(
+                'irisid_stats_settings',
+                'irisid_stats_password_reset',
+                'Admin dashboard (/admin) password updated.',
+                'success'
+            );
+        }
     }
 
     return $settings;
@@ -77,6 +99,7 @@ function irisid_stats_render_admin_page(): void
     <div class="wrap">
       <h1>Stats at a Glance</h1>
       <p>Configure the password-protected frontend dashboard and stakeholder email digests. Traffic is collected from the Next.js site via a secure beacon.</p>
+      <?php settings_errors('irisid_stats_settings'); ?>
 
       <div class="card" style="max-width:720px;padding:16px;margin:16px 0;">
         <h2 style="margin-top:0;">Last 30 days (live)</h2>
@@ -101,10 +124,10 @@ function irisid_stats_render_admin_page(): void
             </td>
           </tr>
           <tr>
-            <th scope="row"><label for="irisid_stats_dashboard_password">Dashboard password</label></th>
+            <th scope="row"><label for="irisid_stats_reset_dashboard_password">Reset admin (/admin) password</label></th>
             <td>
-              <input name="irisid_stats_settings[dashboard_password]" id="irisid_stats_dashboard_password" type="text" class="regular-text" value="<?php echo esc_attr((string) $settings['dashboard_password']); ?>" />
-              <p class="description">Also set <code>STATS_DASHBOARD_PASSWORD</code> on the Next.js host to the same value.</p>
+              <input name="irisid_stats_settings[reset_dashboard_password]" id="irisid_stats_reset_dashboard_password" type="text" class="regular-text" autocomplete="off" value="" placeholder="Leave blank to keep the current password" />
+              <p class="description">Write-only: sets a new password for the Next.js <code>/admin</code> login (min. 10 characters). Use this to recover access if the password is lost — the current value is never shown here.</p>
             </td>
           </tr>
           <tr>
