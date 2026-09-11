@@ -20,6 +20,7 @@ require_once IRISID_HEADLESS_DIR . '/includes/admin-rest.php';
 require_once IRISID_HEADLESS_DIR . '/includes/headless-lockdown.php';
 require_once IRISID_HEADLESS_DIR . '/includes/revalidate-webhook.php';
 require_once IRISID_HEADLESS_DIR . '/includes/graphql-upload.php';
+require_once IRISID_HEADLESS_DIR . '/includes/site-notice-admin.php';
 
 add_action('init', 'irisid_register_content_types', 5);
 add_action('acf/init', 'irisid_register_acf_options_pages');
