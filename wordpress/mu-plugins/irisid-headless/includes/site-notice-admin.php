@@ -132,10 +132,117 @@ function irisid_site_notice_status_label(int $post_id): array
     $ends = irisid_site_notice_et_datetime((string) get_post_meta($post_id, 'ends_at', true));
 
     if ($starts && $now < $starts) {
-        return ['예정', '#2563eb'];
+        return ['Scheduled', '#2563eb'];
     }
     if ($ends && $now > $ends) {
-        return ['게시끝', '#a1a1aa'];
+        return ['Ended', '#a1a1aa'];
     }
-    return ['게시중', '#16a34a'];
+    return ['Live', '#16a34a'];
+}
+
+/**
+ * Warn (don't block) when saving a notice whose Show from/until window overlaps
+ * another published notice's — both would be eligible on at least the homepage
+ * at the same time, and pickSiteNoticeForPath() on the frontend just picks the
+ * first match, silently hiding the other. Editors can still choose to proceed.
+ */
+add_action('admin_enqueue_scripts', 'irisid_site_notice_overlap_check_script');
+
+function irisid_site_notice_overlap_check_script(string $hook): void
+{
+    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== 'site_notice') {
+        return;
+    }
+
+    $current_post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+
+    wp_add_inline_script(
+        'jquery-core',
+        irisid_site_notice_overlap_check_js($current_post_id),
+        'after'
+    );
+}
+
+function irisid_site_notice_overlap_check_js(int $currentPostId): string
+{
+    $rest_url = esc_url_raw(rest_url('wp/v2/site_notice') . '?status=publish&per_page=100&_fields=id,title,acf');
+
+    return <<<JS
+    (function () {
+        function boot() {
+            if (typeof acf === 'undefined') return;
+            acf.addAction('ready', function () {
+                var startsField = acf.getField('field_irisid_notice_starts_at');
+                var endsField = acf.getField('field_irisid_notice_ends_at');
+                if (!startsField || !endsField) return;
+
+                var currentPostId = {$currentPostId};
+                var others = null;
+
+                fetch('{$rest_url}', { credentials: 'same-origin' })
+                    .then(function (r) { return r.ok ? r.json() : []; })
+                    .then(function (list) {
+                        others = (Array.isArray(list) ? list : []).filter(function (n) {
+                            return n.id !== currentPostId;
+                        });
+                    })
+                    .catch(function () { others = []; });
+
+                function parseDate(v) {
+                    if (!v) return null;
+                    var d = new Date(String(v).replace(' ', 'T'));
+                    return isNaN(d.getTime()) ? null : d;
+                }
+
+                // Open-ended bounds (null) mean "always" on that side.
+                function overlaps(aStart, aEnd, bStart, bEnd) {
+                    if (aEnd && bStart && aEnd < bStart) return false;
+                    if (bEnd && aStart && bEnd < aStart) return false;
+                    return true;
+                }
+
+                var form = document.getElementById('post');
+                if (!form) return;
+
+                form.addEventListener('submit', function (e) {
+                    if (!others || !others.length) return; // fetch not ready / nothing to compare
+
+                    var starts = parseDate(startsField.val());
+                    var ends = parseDate(endsField.val());
+
+                    var conflicts = others.filter(function (n) {
+                        var acfData = n.acf || {};
+                        return overlaps(starts, ends, parseDate(acfData.starts_at), parseDate(acfData.ends_at));
+                    });
+
+                    if (conflicts.length === 0) return;
+
+                    var names = conflicts
+                        .map(function (n) { return (n.title && n.title.rendered) || ('#' + n.id); })
+                        .join(', ');
+                    var proceed = window.confirm(
+                        'Schedule overlap warning\\n\\n' +
+                        'This notice\\'s Show from/until window overlaps with: ' + names + '.\\n' +
+                        'Only one notice shows at a time on a given page, so one of these may be hidden.\\n\\n' +
+                        'Save anyway?'
+                    );
+                    if (!proceed) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    }
+                }, true);
+            });
+        }
+
+        if (window.acf) {
+            boot();
+        } else {
+            document.addEventListener('DOMContentLoaded', boot);
+        }
+    })();
+    JS;
 }
