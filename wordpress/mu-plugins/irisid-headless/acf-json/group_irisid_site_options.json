@@ -25,7 +25,7 @@
       "label": "Knowledge Base URL (Salesforce)",
       "name": "knowledge_base_url",
       "type": "url",
-      "instructions": "External Salesforce KB — not hosted on irisid.com",
+      "instructions": "External Salesforce KB – not hosted on irisid.com",
       "show_in_graphql": 1,
       "graphql_field_name": "knowledgeBaseUrl"
     },
@@ -52,6 +52,53 @@
       "type": "text",
       "show_in_graphql": 1,
       "graphql_field_name": "copyright"
+    },
+    {
+      "key": "field_irisid_opt_hero_mode",
+      "label": "Homepage hero mode",
+      "name": "homepage_hero_mode",
+      "type": "select",
+      "choices": {
+        "1": "Option 1 – Bézier Lines",
+        "2": "Option 2 – Anomalous Matter",
+        "3": "Option 3 – Digital Blue Face Video",
+        "4": "Option 4 – GradFlow Silk",
+        "5": "Option 5 – HUD Scan"
+      },
+      "default_value": "1",
+      "return_format": "value",
+      "instructions": "Used when no custom hero image/video URL is set. Managed from /admin Settings.",
+      "show_in_graphql": 1,
+      "graphql_field_name": "homepageHeroMode"
+    },
+    {
+      "key": "field_irisid_opt_hero_image_url",
+      "label": "Homepage hero image URL",
+      "name": "homepage_hero_image_url",
+      "type": "url",
+      "instructions": "Optional full-bleed hero image. Overrides the visual mode background when set.",
+      "show_in_graphql": 1,
+      "graphql_field_name": "homepageHeroImageUrl"
+    },
+    {
+      "key": "field_irisid_opt_hero_video_url",
+      "label": "Homepage hero video URL",
+      "name": "homepage_hero_video_url",
+      "type": "url",
+      "instructions": "Optional looping hero video URL. Takes priority over image when both are set.",
+      "show_in_graphql": 1,
+      "graphql_field_name": "homepageHeroVideoUrl"
+    },
+    {
+      "key": "field_irisid_opt_aslan_chat",
+      "label": "ASLAN chatbot enabled",
+      "name": "aslan_chat_enabled",
+      "type": "true_false",
+      "ui": 1,
+      "default_value": 1,
+      "instructions": "Public site chatbot widget. Server env ASLAN_CHAT_ENABLED=0 still forces off.",
+      "show_in_graphql": 1,
+      "graphql_field_name": "aslanChatEnabled"
     }
   ],
   "location": [

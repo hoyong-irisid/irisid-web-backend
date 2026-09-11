@@ -158,6 +158,15 @@
       "return_format": "Y-m-d H:i:s",
       "show_in_graphql": 1,
       "graphql_field_name": "endsAt"
+    },
+    {
+      "key": "field_irisid_notice_linked_event",
+      "label": "Linked event resource ID",
+      "name": "linked_event_id",
+      "type": "number",
+      "instructions": "Set by /admin Events when promoting a resource event to the notice bar.",
+      "show_in_graphql": 1,
+      "graphql_field_name": "linkedEventId"
     }
   ],
   "location": [
