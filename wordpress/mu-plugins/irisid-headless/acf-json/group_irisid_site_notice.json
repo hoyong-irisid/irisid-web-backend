@@ -3,6 +3,39 @@
   "title": "Site Notice Fields",
   "fields": [
     {
+      "key": "field_irisid_notice_tab_content",
+      "label": "Content",
+      "type": "tab",
+      "placement": "top"
+    },
+    {
+      "key": "field_irisid_notice_linked_event",
+      "label": "Linked event",
+      "name": "linked_event",
+      "type": "relationship",
+      "instructions": "Search and select an event. When set, this notice shows that event's title, excerpt, and link automatically — Notice body and CTA URL below are ignored.",
+      "post_type": ["resource"],
+      "taxonomy": ["resource_type:events"],
+      "filters": ["search"],
+      "elements": [],
+      "min": 0,
+      "max": 1,
+      "return_format": "object",
+      "show_in_graphql": 1,
+      "graphql_field_name": "linkedEvent"
+    },
+    {
+      "key": "field_irisid_notice_body",
+      "label": "Notice body",
+      "name": "notice_body",
+      "type": "textarea",
+      "instructions": "Shown under the title above. Ignored when Linked event above is set.",
+      "rows": 3,
+      "new_lines": "br",
+      "show_in_graphql": 1,
+      "graphql_field_name": "noticeBody"
+    },
+    {
       "key": "field_irisid_notice_cta_enabled",
       "label": "Show CTA button",
       "name": "cta_enabled",
@@ -36,7 +69,7 @@
       "label": "CTA URL",
       "name": "cta_url",
       "type": "text",
-      "instructions": "Internal path (e.g. /resources/events/bmic8-2026/) or full URL (https://…).",
+      "instructions": "Internal path (e.g. /resources/events/bmic8-2026/) or full URL (https://…). Ignored when Linked event above is set — the event's own page is used instead.",
       "placeholder": "/resources/events/bmic8-2026/",
       "conditional_logic": [
         [
@@ -49,6 +82,11 @@
       ],
       "show_in_graphql": 1,
       "graphql_field_name": "ctaUrl"
+    },
+    {
+      "key": "field_irisid_notice_tab_appearance",
+      "label": "Appearance",
+      "type": "tab"
     },
     {
       "key": "field_irisid_notice_display_scope",
@@ -87,7 +125,7 @@
       "label": "Background color",
       "name": "background_color",
       "type": "color_picker",
-      "instructions": "Bar or modal background. Text color adjusts automatically for contrast.",
+      "instructions": "Bar or modal background. Text color adjusts automatically for contrast — there's no separate text color setting.",
       "default_value": "#e4e4e7",
       "enable_opacity": 0,
       "return_format": "string",
@@ -138,6 +176,11 @@
       "graphql_field_name": "textAlign"
     },
     {
+      "key": "field_irisid_notice_tab_schedule",
+      "label": "Schedule",
+      "type": "tab"
+    },
+    {
       "key": "field_irisid_notice_starts_at",
       "label": "Show from (ET)",
       "name": "starts_at",
@@ -158,22 +201,6 @@
       "return_format": "Y-m-d H:i:s",
       "show_in_graphql": 1,
       "graphql_field_name": "endsAt"
-    },
-    {
-      "key": "field_irisid_notice_linked_event",
-      "label": "Linked event",
-      "name": "linked_event",
-      "type": "relationship",
-      "instructions": "Search and select an event. When set, this notice's title, body, and link are shown automatically from the event — no need to fill those in separately.",
-      "post_type": ["resource"],
-      "taxonomy": ["resource_type:events"],
-      "filters": ["search"],
-      "elements": [],
-      "min": 0,
-      "max": 1,
-      "return_format": "object",
-      "show_in_graphql": 1,
-      "graphql_field_name": "linkedEvent"
     }
   ],
   "location": [
@@ -186,12 +213,12 @@
     ]
   ],
   "menu_order": 0,
-  "position": "side",
+  "position": "normal",
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789155355,
+  "modified": 1789156800,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "siteNoticeFields"
