@@ -48,13 +48,21 @@ function irisid_revalidate_tag_for_post(WP_Post $post): string
     $type = $post->post_type;
     $slug = $post->post_name;
 
-    return match ($type) {
-        'product'  => "product:{$slug}",
-        'solution' => "solution:{$slug}",
-        'resource' => "resource:{$slug}",
-        'download' => 'downloads',
-        'faq'      => 'faq',
-        'page'     => "page:{$slug}",
-        default    => 'content',
-    };
+    // switch (not match) – WP-CLI on the VPS may still be PHP 7.4.
+    switch ($type) {
+        case 'product':
+            return "product:{$slug}";
+        case 'solution':
+            return "solution:{$slug}";
+        case 'resource':
+            return "resource:{$slug}";
+        case 'download':
+            return 'downloads';
+        case 'faq':
+            return 'faq';
+        case 'page':
+            return "page:{$slug}";
+        default:
+            return 'content';
+    }
 }
