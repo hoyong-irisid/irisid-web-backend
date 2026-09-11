@@ -12,6 +12,48 @@ add_filter('manage_edit-site_notice_columns', 'irisid_site_notice_admin_columns'
 add_action('manage_site_notice_posts_custom_column', 'irisid_site_notice_admin_column_content', 10, 2);
 
 /**
+ * Core's Revisions + Slug boxes register in the same 'normal' column as the ACF
+ * "Site Notice Fields" panel, ahead of it, pushing the actual editable content
+ * (Linked event, Notice body, ...) below a long revision list. Demote them to
+ * 'low' priority so the ACF panel — whatever priority it happens to register
+ * at — renders first regardless.
+ *
+ * Core adds revisionsdiv/slugdiv directly in wp-admin/edit-form-advanced.php,
+ * not through a hooked add_meta_boxes callback, so by the time the
+ * `add_meta_boxes` action fires they don't exist yet to move. `do_meta_boxes`
+ * fires once per context right before that context's boxes are printed —
+ * definitely after both core and ACF have registered theirs.
+ */
+add_action('do_meta_boxes', 'irisid_reorder_site_notice_metaboxes', 1, 2);
+
+/** @param string|WP_Screen $screen WP core has passed either across versions. */
+function irisid_reorder_site_notice_metaboxes($screen, string $context): void
+{
+    $post_type = is_object($screen) && isset($screen->post_type) ? $screen->post_type : (string) $screen;
+    if ($post_type !== 'site_notice' || $context !== 'normal') {
+        return;
+    }
+
+    global $wp_meta_boxes;
+    if (empty($wp_meta_boxes['site_notice']['normal'])) {
+        return;
+    }
+
+    foreach (['high', 'core', 'default'] as $priority) {
+        if (empty($wp_meta_boxes['site_notice']['normal'][$priority])) {
+            continue;
+        }
+        foreach (['revisionsdiv', 'slugdiv'] as $id) {
+            if (isset($wp_meta_boxes['site_notice']['normal'][$priority][$id])) {
+                $wp_meta_boxes['site_notice']['normal']['low'][$id] =
+                    $wp_meta_boxes['site_notice']['normal'][$priority][$id];
+                unset($wp_meta_boxes['site_notice']['normal'][$priority][$id]);
+            }
+        }
+    }
+}
+
+/**
  * @param array<string, string> $columns
  * @return array<string, string>
  */
