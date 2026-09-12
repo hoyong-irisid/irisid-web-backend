@@ -15,13 +15,13 @@ add_action('manage_site_notice_posts_custom_column', 'irisid_site_notice_admin_c
  * Core's Revisions + Slug boxes register in the same 'normal' column as the ACF
  * "Site Notice Fields" panel, ahead of it, pushing the actual editable content
  * (Linked event, Notice body, ...) below a long revision list. Demote them to
- * 'low' priority so the ACF panel — whatever priority it happens to register
- * at — renders first regardless.
+ * 'low' priority so the ACF panel – whatever priority it happens to register
+ * at – renders first regardless.
  *
  * Core adds revisionsdiv/slugdiv directly in wp-admin/edit-form-advanced.php,
  * not through a hooked add_meta_boxes callback, so by the time the
  * `add_meta_boxes` action fires they don't exist yet to move. `do_meta_boxes`
- * fires once per context right before that context's boxes are printed —
+ * fires once per context right before that context's boxes are printed –
  * definitely after both core and ACF have registered theirs.
  */
 add_action('do_meta_boxes', 'irisid_reorder_site_notice_metaboxes', 1, 2);
@@ -142,7 +142,7 @@ function irisid_site_notice_status_label(int $post_id): array
 
 /**
  * Warn (don't block) when saving a notice whose Show from/until window overlaps
- * another published notice's — both would be eligible on at least the homepage
+ * another published notice's – both would be eligible on at least the homepage
  * at the same time, and pickSiteNoticeForPath() on the frontend just picks the
  * first match, silently hiding the other. Editors can still choose to proceed.
  */
@@ -205,10 +205,140 @@ function irisid_site_notice_overlap_check_js(int $currentPostId): string
                     return true;
                 }
 
+                function injectModalStyles() {
+                    if (document.getElementById('irisid-overlap-modal-styles')) return;
+                    var style = document.createElement('style');
+                    style.id = 'irisid-overlap-modal-styles';
+                    style.textContent = `
+                        .irisid-overlap-backdrop {
+                            position: fixed; inset: 0; background: rgba(30, 34, 40, .55);
+                            z-index: 100000; display: flex; align-items: center; justify-content: center;
+                            padding: 20px; opacity: 0; transition: opacity .15s ease;
+                        }
+                        .irisid-overlap-backdrop.is-visible { opacity: 1; }
+                        .irisid-overlap-modal {
+                            background: #fff; width: 100%; max-width: 460px; border-radius: 4px;
+                            box-shadow: 0 8px 30px rgba(0,0,0,.25); overflow: hidden;
+                            transform: translateY(-8px) scale(.98); transition: transform .15s ease;
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                        }
+                        .irisid-overlap-backdrop.is-visible .irisid-overlap-modal { transform: translateY(0) scale(1); }
+                        .irisid-overlap-modal__header {
+                            display: flex; align-items: center; gap: 10px; padding: 16px 20px;
+                            border-bottom: 1px solid #dcdcde;
+                        }
+                        .irisid-overlap-modal__icon {
+                            flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+                            background: #fcf0e3; color: #b5680a; display: flex; align-items: center;
+                            justify-content: center; font-size: 14px; font-weight: 700;
+                        }
+                        .irisid-overlap-modal__title { margin: 0; font-size: 15px; font-weight: 600; color: #1d2327; }
+                        .irisid-overlap-modal__body { padding: 16px 20px; font-size: 13px; line-height: 1.6; color: #3c434a; }
+                        .irisid-overlap-modal__body p { margin: 0 0 8px; }
+                        .irisid-overlap-modal__body p:last-child { margin-bottom: 0; }
+                        .irisid-overlap-modal__body strong { color: #1d2327; }
+                        .irisid-overlap-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 18px; }
+                        .irisid-overlap-btn {
+                            border-radius: 3px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+                            border: 1px solid transparent; line-height: 1.4;
+                        }
+                        .irisid-overlap-btn--cancel { background: #f6f7f7; border-color: #dcdcde; color: #2c3338; }
+                        .irisid-overlap-btn--cancel:hover { background: #f0f0f1; }
+                        .irisid-overlap-btn--proceed { background: #b32d2e; border-color: #b32d2e; color: #fff; }
+                        .irisid-overlap-btn--proceed:hover { background: #8a2323; }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                function showOverlapModal(namesText) {
+                    return new Promise(function (resolve) {
+                        injectModalStyles();
+
+                        var backdrop = document.createElement('div');
+                        backdrop.className = 'irisid-overlap-backdrop';
+
+                        var modal = document.createElement('div');
+                        modal.className = 'irisid-overlap-modal';
+                        modal.setAttribute('role', 'alertdialog');
+                        modal.setAttribute('aria-modal', 'true');
+                        modal.setAttribute('aria-labelledby', 'irisid-overlap-title');
+
+                        var header = document.createElement('div');
+                        header.className = 'irisid-overlap-modal__header';
+                        var icon = document.createElement('span');
+                        icon.className = 'irisid-overlap-modal__icon';
+                        icon.setAttribute('aria-hidden', 'true');
+                        icon.textContent = '!';
+                        var title = document.createElement('h2');
+                        title.className = 'irisid-overlap-modal__title';
+                        title.id = 'irisid-overlap-title';
+                        title.textContent = 'Schedule overlap warning';
+                        header.appendChild(icon);
+                        header.appendChild(title);
+
+                        var body = document.createElement('div');
+                        body.className = 'irisid-overlap-modal__body';
+                        var p1 = document.createElement('p');
+                        p1.appendChild(document.createTextNode('This notice’s Show from/until window overlaps with '));
+                        var strong = document.createElement('strong');
+                        strong.textContent = namesText;
+                        p1.appendChild(strong);
+                        p1.appendChild(document.createTextNode('.'));
+                        var p2 = document.createElement('p');
+                        p2.textContent = 'Only one notice shows at a time on a given page, so one of these may be hidden.';
+                        body.appendChild(p1);
+                        body.appendChild(p2);
+
+                        var footer = document.createElement('div');
+                        footer.className = 'irisid-overlap-modal__footer';
+                        var cancelBtn = document.createElement('button');
+                        cancelBtn.type = 'button';
+                        cancelBtn.className = 'irisid-overlap-btn irisid-overlap-btn--cancel';
+                        cancelBtn.textContent = 'Cancel';
+                        var proceedBtn = document.createElement('button');
+                        proceedBtn.type = 'button';
+                        proceedBtn.className = 'irisid-overlap-btn irisid-overlap-btn--proceed';
+                        proceedBtn.textContent = 'Save anyway';
+                        footer.appendChild(cancelBtn);
+                        footer.appendChild(proceedBtn);
+
+                        modal.appendChild(header);
+                        modal.appendChild(body);
+                        modal.appendChild(footer);
+                        backdrop.appendChild(modal);
+                        document.body.appendChild(backdrop);
+
+                        requestAnimationFrame(function () { backdrop.classList.add('is-visible'); });
+
+                        function close(result) {
+                            backdrop.classList.remove('is-visible');
+                            document.removeEventListener('keydown', onKeydown);
+                            window.setTimeout(function () { backdrop.remove(); }, 150);
+                            resolve(result);
+                        }
+                        function onKeydown(e) {
+                            if (e.key === 'Escape') close(false);
+                        }
+                        document.addEventListener('keydown', onKeydown);
+                        backdrop.addEventListener('click', function (e) {
+                            if (e.target === backdrop) close(false);
+                        });
+                        cancelBtn.addEventListener('click', function () { close(false); });
+                        proceedBtn.addEventListener('click', function () { close(true); });
+                        proceedBtn.focus();
+                    });
+                }
+
                 var form = document.getElementById('post');
                 if (!form) return;
 
+                var bypassCheck = false;
+
                 form.addEventListener('submit', function (e) {
+                    if (bypassCheck) {
+                        bypassCheck = false;
+                        return;
+                    }
                     if (!others || !others.length) return; // fetch not ready / nothing to compare
 
                     var starts = parseDate(startsField.val());
@@ -221,19 +351,23 @@ function irisid_site_notice_overlap_check_js(int $currentPostId): string
 
                     if (conflicts.length === 0) return;
 
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+
                     var names = conflicts
                         .map(function (n) { return (n.title && n.title.rendered) || ('#' + n.id); })
                         .join(', ');
-                    var proceed = window.confirm(
-                        'Schedule overlap warning\\n\\n' +
-                        'This notice\\'s Show from/until window overlaps with: ' + names + '.\\n' +
-                        'Only one notice shows at a time on a given page, so one of these may be hidden.\\n\\n' +
-                        'Save anyway?'
-                    );
-                    if (!proceed) {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                    }
+                    var submitter = e.submitter;
+
+                    showOverlapModal(names).then(function (proceed) {
+                        if (!proceed) return;
+                        bypassCheck = true;
+                        if (submitter && typeof form.requestSubmit === 'function') {
+                            form.requestSubmit(submitter);
+                        } else {
+                            form.submit();
+                        }
+                    });
                 }, true);
             });
         }

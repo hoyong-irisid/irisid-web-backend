@@ -13,7 +13,7 @@
       "label": "Linked event",
       "name": "linked_event",
       "type": "relationship",
-      "instructions": "Search and select an event. When set, this notice shows that event's title, excerpt, and link automatically — Notice body and CTA URL below are ignored.",
+      "instructions": "Search and select an event. When set, the CTA button (if enabled) links to that event's page automatically, overriding the CTA URL field below. Title and Notice body are always shown exactly as entered.",
       "post_type": ["resource"],
       "taxonomy": ["resource_type:events"],
       "filters": ["search"],
@@ -29,7 +29,7 @@
       "label": "Notice body",
       "name": "notice_body",
       "type": "textarea",
-      "instructions": "Shown under the title above. Ignored when Linked event above is set.",
+      "instructions": "Shown under the title above.",
       "rows": 3,
       "new_lines": "br",
       "show_in_graphql": 1,
@@ -69,7 +69,7 @@
       "label": "CTA URL",
       "name": "cta_url",
       "type": "text",
-      "instructions": "Internal path (e.g. /resources/events/bmic8-2026/) or full URL (https://…). Ignored when Linked event above is set — the event's own page is used instead.",
+      "instructions": "Internal path (e.g. /resources/events/bmic8-2026/) or full URL (https://…). Ignored when Linked event above is set – the event's own page is used instead.",
       "placeholder": "/resources/events/bmic8-2026/",
       "conditional_logic": [
         [
@@ -125,12 +125,23 @@
       "label": "Background color",
       "name": "background_color",
       "type": "color_picker",
-      "instructions": "Bar or modal background. Text color adjusts automatically for contrast — there's no separate text color setting.",
+      "instructions": "Bar or modal background.",
       "default_value": "#e4e4e7",
       "enable_opacity": 0,
       "return_format": "string",
       "show_in_graphql": 1,
       "graphql_field_name": "backgroundColor"
+    },
+    {
+      "key": "field_irisid_notice_text_color",
+      "label": "Text color",
+      "name": "text_color",
+      "type": "color_picker",
+      "instructions": "Optional – leave empty to automatically pick a readable color (black or white) based on the background above.",
+      "enable_opacity": 0,
+      "return_format": "string",
+      "show_in_graphql": 1,
+      "graphql_field_name": "textColor"
     },
     {
       "key": "field_irisid_notice_top_bar_layout",
@@ -218,7 +229,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789156800,
+  "modified": 1789171200,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "siteNoticeFields"
