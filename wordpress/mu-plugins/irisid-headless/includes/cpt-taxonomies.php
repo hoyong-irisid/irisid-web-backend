@@ -133,10 +133,6 @@ function irisid_register_post_types(): void
 /** Seed resource_type terms matching live irisid.com archive slugs. */
 function irisid_seed_resource_type_terms(): void
 {
-    if (get_option('irisid_resource_types_seeded')) {
-        return;
-    }
-
     $terms = [
         'news-media'    => 'News & Media',
         'press-release' => 'Press Release',
@@ -147,6 +143,7 @@ function irisid_seed_resource_type_terms(): void
         'case-studies'  => 'Case Studies',
         'webinars'      => 'Webinars',
         'literature'    => 'Literature',
+        'data-sheets'   => 'Data Sheets',
         'tip-sheets'    => 'Tip Sheets',
     ];
 

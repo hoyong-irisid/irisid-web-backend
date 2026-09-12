@@ -1,0 +1,133 @@
+{
+  "key": "group_irisid_resource_sheet",
+  "title": "Data / Tip Sheet Fields",
+  "fields": [
+    {
+      "key": "field_irisid_sheet_version",
+      "label": "Version",
+      "name": "version",
+      "type": "text",
+      "instructions": "Display string, e.g. Version 2.1 or Rev. 2024-06",
+      "show_in_graphql": 1,
+      "graphql_field_name": "version"
+    },
+    {
+      "key": "field_irisid_sheet_document_date",
+      "label": "Document Date",
+      "name": "document_date",
+      "type": "date_picker",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "show_in_graphql": 1,
+      "graphql_field_name": "documentDate"
+    },
+    {
+      "key": "field_irisid_sheet_section",
+      "label": "Section",
+      "name": "section",
+      "type": "select",
+      "instructions": "Grouping on the Data Sheets archive (leave empty for Tip Sheets).",
+      "choices": {
+        "Hardware Products": "Hardware Products",
+        "Software Products": "Software Products"
+      },
+      "default_value": "",
+      "allow_null": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "section"
+    },
+    {
+      "key": "field_irisid_sheet_language_files",
+      "label": "Language Files",
+      "name": "language_files",
+      "type": "repeater",
+      "layout": "block",
+      "button_label": "Add Language File",
+      "instructions": "One row per language PDF (or downloadable file).",
+      "show_in_graphql": 1,
+      "graphql_field_name": "languageFiles",
+      "sub_fields": [
+        {
+          "key": "field_irisid_sheet_lang",
+          "label": "Language",
+          "name": "language",
+          "type": "select",
+          "choices": {
+            "English": "English",
+            "Spanish": "Spanish",
+            "French": "French",
+            "Turkish": "Turkish",
+            "German": "German",
+            "Korean": "Korean",
+            "Japanese": "Japanese",
+            "Chinese": "Chinese",
+            "Portuguese": "Portuguese",
+            "Italian": "Italian",
+            "Arabic": "Arabic",
+            "DOWNLOAD": "Download (generic)"
+          },
+          "default_value": "English",
+          "required": 1,
+          "show_in_graphql": 1,
+          "graphql_field_name": "language"
+        },
+        {
+          "key": "field_irisid_sheet_file",
+          "label": "File (PDF)",
+          "name": "file",
+          "type": "file",
+          "return_format": "array",
+          "mime_types": "pdf",
+          "required": 0,
+          "instructions": "Preferred. Upload the PDF for this language.",
+          "show_in_graphql": 1,
+          "graphql_field_name": "file"
+        },
+        {
+          "key": "field_irisid_sheet_lang_url",
+          "label": "Or external / gated URL",
+          "name": "url",
+          "type": "url",
+          "required": 0,
+          "instructions": "Use when the PDF is behind a form page (legacy tip sheets) or hosted elsewhere.",
+          "show_in_graphql": 1,
+          "graphql_field_name": "url"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "resource"
+      },
+      {
+        "param": "post_taxonomy",
+        "operator": "==",
+        "value": "resource_type:data-sheets"
+      }
+    ],
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "resource"
+      },
+      {
+        "param": "post_taxonomy",
+        "operator": "==",
+        "value": "resource_type:tip-sheets"
+      }
+    ]
+  ],
+  "menu_order": 5,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "active": true,
+  "show_in_graphql": 1,
+  "graphql_field_name": "sheetFields"
+}
