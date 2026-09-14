@@ -163,6 +163,20 @@ function irisid_seed_resource_type_terms(): void
         }
     }
 
+    $downloadTypes = [
+        'software'             => 'Software',
+        'drivers'              => 'Drivers',
+        'documentation'        => 'Documentation',
+        'literature'           => 'Literature',
+        'tip-sheet'            => 'Tip Sheet',
+        'architect-engineer'   => 'Architect & Engineer',
+    ];
+    foreach ($downloadTypes as $slug => $name) {
+        if (!term_exists($slug, 'download_type')) {
+            wp_insert_term($name, 'download_type', ['slug' => $slug]);
+        }
+    }
+
     update_option('irisid_resource_types_seeded', 1, false);
 }
 
