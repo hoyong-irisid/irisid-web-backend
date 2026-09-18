@@ -23,14 +23,47 @@ Prefer **ACF JSON sync** for field definitions. Use WXR ACF exports only if sync
 
 ## Import order (WordPress admin on cms.irisid.com)
 
-1. **Tools → Import → WordPress** (install importer if needed).
-2. Import `cd-keys.xml`, then `reference-numbers.xml`.
-   - Map authors to an existing CMS admin.
-   - Download/import attachments: **No** (licensing posts are titles + meta only).
-3. If ACF groups are missing after mu-plugin deploy: sync from JSON, or import `acf-field-groups.xml` then `acf-fields.xml`.
-4. Spot-check:
-   - **IrisID License Check → CD Keys** – titles look like CD keys; ACF Product / Users / Claim Status present.
-   - **Reference Numbers** – 14-char titles; Product / License Parameter / Claim Status present.
+`cd-keys.xml` is ~6MB / ~2889 posts. The browser importer often fails with:
+
+- **File is empty** → PHP `upload_max_filesize` / `post_max_size` too small
+- **504 Gateway Time-out** → nginx/PHP timeout while importing thousands of posts
+
+### A. Small file via UI (Reference Numbers)
+
+1. **Tools → Import → WordPress**
+2. Upload `reference-numbers.xml` (~181KB) only
+3. Map author → existing admin; attachments **No**
+
+### B. Large file via SSH + WP-CLI (CD Keys) – recommended
+
+From your Mac (adjust `WP_ROOT` if needed):
+
+```bash
+# 1) Upload WXR to the server
+scp docs/migration/licensing-wxr/cd-keys.xml \
+  irisid5@173.231.221.180:/home/irisid5/tmp-cd-keys.xml
+
+# 2) Import on the VPS (WordPress root = cms docroot)
+ssh irisid5@173.231.221.180
+cd /home/irisid5/cms.irisid.com   # or public_html/cms – same as WP_ROOT
+wp import /home/irisid5/tmp-cd-keys.xml --authors=create
+# If authors already exist, use: --authors=skip
+# Or map: --authors=irisid5:admin
+```
+
+If `wp` is not in PATH, try `~/bin/wp` or `/usr/local/bin/wp`. Run in `screen`/`tmux` so SSH drops do not kill a long import.
+
+### C. UI-only workaround (if no SSH)
+
+In cPanel → **MultiPHP INI Editor** for `cms.irisid.com`:
+
+- `upload_max_filesize = 64M`
+- `post_max_size = 64M`
+- `max_execution_time = 600`
+- `memory_limit = 512M`
+
+Also raise nginx/`ProxyTimeout` if you control it. Then retry Tools → Import. Still prefer WP-CLI for reliability.
+
 
 ## REST smoke tests
 
@@ -51,9 +84,15 @@ Frontend proxies:
 - `POST /api/licensing/lookup/` → CMS check endpoints
 - `POST /api/licensing/submit/` → CMS submit (claims key + emails `licensing@irisid.com`)
 
-## Behavior parity notes
+## Admin UI (parity with live)
 
-- CD Key lookup at **10 or 25** characters (prefix match on first 10).
-- Reference Number lookup at exact **14** characters.
-- Submit still accepted if key not found or already claimed; email body includes a warning; claim only when found and Unclaimed.
-- Claim timestamp uses America/New_York (`m/d/Y g:i a`), matching live.
+After deploy, WordPress admin shows **IrisID License Check** with:
+
+| CPT | List columns |
+|-----|----------------|
+| CD Keys | Title, Product, Users, Claim Status, Date Claimed |
+| Reference Numbers | Title, Product, License Parameter, Claim Status, Date Claimed |
+
+Empty claim dates show `–`. Bulk actions are disabled (same as live).
+ACF field groups include the same meta fields as live; sync JSON after mu-plugin deploy.
+

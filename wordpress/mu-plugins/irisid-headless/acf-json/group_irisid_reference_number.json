@@ -14,13 +14,15 @@
         "Android SDK-M300": "Android SDK-M300"
       },
       "return_format": "value",
-      "allow_null": 0
+      "allow_null": 0,
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_ref_license_parameter",
       "label": "License Parameter",
       "name": "license_parameter",
-      "type": "text"
+      "type": "text",
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_ref_claim_status",
@@ -33,7 +35,8 @@
       },
       "default_value": "Unclaimed",
       "return_format": "value",
-      "layout": "vertical"
+      "layout": "vertical",
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_ref_date_claimed",
@@ -42,7 +45,8 @@
       "type": "date_time_picker",
       "display_format": "m/d/Y g:i a",
       "return_format": "m/d/Y g:i a",
-      "first_day": 0
+      "first_day": 0,
+      "admin_column_enabled": 1
     }
   ],
   "location": [

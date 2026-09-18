@@ -67,15 +67,62 @@ function irisid_licensing_admin_menu(): void
 
 add_action('admin_menu', 'irisid_licensing_admin_menu');
 
-/** @param array<string, string> $columns */
-function irisid_licensing_remove_date_column(array $columns): array
+add_filter('bulk_actions-edit-cd_keys', '__return_empty_array');
+add_filter('bulk_actions-edit-reference_numbers', '__return_empty_array');
+
+/**
+ * List table columns – match live IrisID License Check admin.
+ *
+ * @param array<string, string> $columns
+ * @return array<string, string>
+ */
+function irisid_licensing_cd_keys_columns(array $columns): array
 {
-    unset($columns['date']);
-    return $columns;
+    return [
+        'cb' => $columns['cb'] ?? '<input type="checkbox" />',
+        'title' => 'Title',
+        'product' => 'Product',
+        'users' => 'Users',
+        'claim_status' => 'Claim Status',
+        'date_claimed' => 'Date Claimed',
+    ];
 }
 
-add_filter('manage_cd_keys_posts_columns', 'irisid_licensing_remove_date_column');
-add_filter('manage_reference_numbers_posts_columns', 'irisid_licensing_remove_date_column');
+/**
+ * @param array<string, string> $columns
+ * @return array<string, string>
+ */
+function irisid_licensing_reference_numbers_columns(array $columns): array
+{
+    return [
+        'cb' => $columns['cb'] ?? '<input type="checkbox" />',
+        'title' => 'Title',
+        'product' => 'Product',
+        'license_parameter' => 'License Parameter',
+        'claim_status' => 'Claim Status',
+        'date_claimed' => 'Date Claimed',
+    ];
+}
+
+add_filter('manage_cd_keys_posts_columns', 'irisid_licensing_cd_keys_columns');
+add_filter('manage_reference_numbers_posts_columns', 'irisid_licensing_reference_numbers_columns');
+
+function irisid_licensing_render_list_column(string $column, int $post_id): void
+{
+    $allowed = ['product', 'users', 'license_parameter', 'claim_status', 'date_claimed'];
+    if (!in_array($column, $allowed, true)) {
+        return;
+    }
+    $value = irisid_licensing_meta_value($post_id, $column);
+    if ($value === '') {
+        echo '–';
+        return;
+    }
+    echo esc_html($value);
+}
+
+add_action('manage_cd_keys_posts_custom_column', 'irisid_licensing_render_list_column', 10, 2);
+add_action('manage_reference_numbers_posts_custom_column', 'irisid_licensing_render_list_column', 10, 2);
 
 function irisid_licensing_meta_value(int $post_id, string $key): string
 {
@@ -365,7 +412,7 @@ function irisid_rest_licensing_submit(WP_REST_Request $request): WP_REST_Respons
     ];
     $body_text = implode("\n", array_values(array_filter($lines, static fn ($line) => $line !== null && $line !== '')));
 
-    $to = 'licensing@irisid.com';
+    $to = ['licensing@irisid.com', 'hoyong.lee@irisid.com'];
     $subject = sprintf('[Licensing] %s – %s', $license_type, $company);
     $headers = [
         'Content-Type: text/plain; charset=UTF-8',

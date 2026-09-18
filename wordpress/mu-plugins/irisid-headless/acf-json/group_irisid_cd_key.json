@@ -12,13 +12,15 @@
       },
       "default_value": "IrisAccess EAC Software",
       "return_format": "value",
-      "allow_null": 0
+      "allow_null": 0,
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_cd_key_users",
       "label": "Users",
       "name": "users",
-      "type": "number"
+      "type": "number",
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_cd_key_claim_status",
@@ -31,7 +33,8 @@
       },
       "default_value": "Unclaimed",
       "return_format": "value",
-      "layout": "vertical"
+      "layout": "vertical",
+      "admin_column_enabled": 1
     },
     {
       "key": "field_irisid_cd_key_date_claimed",
@@ -40,7 +43,8 @@
       "type": "date_time_picker",
       "display_format": "m/d/Y g:i a",
       "return_format": "m/d/Y g:i a",
-      "first_day": 0
+      "first_day": 0,
+      "admin_column_enabled": 1
     }
   ],
   "location": [
