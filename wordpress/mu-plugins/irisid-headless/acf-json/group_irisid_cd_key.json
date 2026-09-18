@@ -1,0 +1,61 @@
+{
+  "key": "group_irisid_cd_key",
+  "title": "CD Key Information",
+  "fields": [
+    {
+      "key": "field_irisid_cd_key_product",
+      "label": "Product",
+      "name": "product",
+      "type": "select",
+      "choices": {
+        "IrisAccess EAC Software": "IrisAccess EAC Software"
+      },
+      "default_value": "IrisAccess EAC Software",
+      "return_format": "value",
+      "allow_null": 0
+    },
+    {
+      "key": "field_irisid_cd_key_users",
+      "label": "Users",
+      "name": "users",
+      "type": "number"
+    },
+    {
+      "key": "field_irisid_cd_key_claim_status",
+      "label": "Claim Status",
+      "name": "claim_status",
+      "type": "radio",
+      "choices": {
+        "Unclaimed": "Unclaimed",
+        "Claimed": "Claimed"
+      },
+      "default_value": "Unclaimed",
+      "return_format": "value",
+      "layout": "vertical"
+    },
+    {
+      "key": "field_irisid_cd_key_date_claimed",
+      "label": "Date Claimed",
+      "name": "date_claimed",
+      "type": "date_time_picker",
+      "display_format": "m/d/Y g:i a",
+      "return_format": "m/d/Y g:i a",
+      "first_day": 0
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "cd_keys"
+      }
+    ]
+  ],
+  "active": true,
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label"
+}

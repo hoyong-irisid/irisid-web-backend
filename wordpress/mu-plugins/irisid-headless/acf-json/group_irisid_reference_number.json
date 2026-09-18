@@ -1,0 +1,63 @@
+{
+  "key": "group_irisid_reference_number",
+  "title": "Reference Number Information",
+  "fields": [
+    {
+      "key": "field_irisid_ref_product",
+      "label": "Product",
+      "name": "product",
+      "type": "select",
+      "choices": {
+        "IrisAccess EAC": "IrisAccess EAC",
+        "iData Iris SDK": "iData Iris SDK",
+        "IrisAccelerator-M": "IrisAccelerator-M",
+        "Android SDK-M300": "Android SDK-M300"
+      },
+      "return_format": "value",
+      "allow_null": 0
+    },
+    {
+      "key": "field_irisid_ref_license_parameter",
+      "label": "License Parameter",
+      "name": "license_parameter",
+      "type": "text"
+    },
+    {
+      "key": "field_irisid_ref_claim_status",
+      "label": "Claim Status",
+      "name": "claim_status",
+      "type": "radio",
+      "choices": {
+        "Unclaimed": "Unclaimed",
+        "Claimed": "Claimed"
+      },
+      "default_value": "Unclaimed",
+      "return_format": "value",
+      "layout": "vertical"
+    },
+    {
+      "key": "field_irisid_ref_date_claimed",
+      "label": "Date Claimed",
+      "name": "date_claimed",
+      "type": "date_time_picker",
+      "display_format": "m/d/Y g:i a",
+      "return_format": "m/d/Y g:i a",
+      "first_day": 0
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "reference_numbers"
+      }
+    ]
+  ],
+  "active": true,
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label"
+}

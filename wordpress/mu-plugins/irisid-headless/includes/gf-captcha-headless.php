@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Headless Next verifies Cloudflare Turnstile before calling submitGfForm.
+ * Skip Gravity Forms' own CAPTCHA field validation on GraphQL requests so the
+ * duplicate Google reCAPTCHA widget is not required in the headless UI.
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+add_filter('gform_field_validation', 'irisid_skip_gf_captcha_on_graphql', 10, 4);
+
+/**
+ * @param array<string, mixed> $result
+ * @param mixed                $value
+ * @param array<string, mixed> $form
+ * @param GF_Field             $field
+ * @return array<string, mixed>
+ */
+function irisid_skip_gf_captcha_on_graphql($result, $value, $form, $field)
+{
+    $type = is_object($field) ? (string) ($field->type ?? '') : '';
+    if ($type !== 'captcha') {
+        return $result;
+    }
+
+    if (defined('GRAPHQL_REQUEST') && GRAPHQL_REQUEST) {
+        $result['is_valid'] = true;
+        $result['message'] = '';
+    }
+
+    return $result;
+}

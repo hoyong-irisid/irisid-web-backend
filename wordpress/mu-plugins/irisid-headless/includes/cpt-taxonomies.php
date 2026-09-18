@@ -10,6 +10,7 @@ function irisid_register_content_types(): void
 {
     irisid_register_taxonomies();
     irisid_register_post_types();
+    irisid_register_licensing_post_types();
     irisid_seed_resource_type_terms();
 }
 
