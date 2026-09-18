@@ -235,7 +235,7 @@ function irisid_licensing_mark_claimed(int $post_id): bool
 function irisid_register_licensing_rest_routes(): void
 {
     register_rest_route('irisid/v1', '/licensing/check-cd-key', [
-        'methods'             => 'POST',
+        'methods'             => ['GET', 'POST'],
         'permission_callback' => '__return_true',
         'callback'            => 'irisid_rest_licensing_check_cd_key',
         'args'                => [
@@ -247,7 +247,7 @@ function irisid_register_licensing_rest_routes(): void
     ]);
 
     register_rest_route('irisid/v1', '/licensing/check-ref-number', [
-        'methods'             => 'POST',
+        'methods'             => ['GET', 'POST'],
         'permission_callback' => '__return_true',
         'callback'            => 'irisid_rest_licensing_check_ref_number',
         'args'                => [
@@ -259,10 +259,23 @@ function irisid_register_licensing_rest_routes(): void
     ]);
 
     register_rest_route('irisid/v1', '/licensing/submit', [
-        'methods'             => 'POST',
+        'methods'             => ['GET', 'POST'],
         'permission_callback' => '__return_true',
         'callback'            => 'irisid_rest_licensing_submit',
     ]);
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function irisid_licensing_rest_body(WP_REST_Request $request): array
+{
+    $json = $request->get_json_params();
+    if (is_array($json) && $json !== []) {
+        return $json;
+    }
+    $params = $request->get_params();
+    return is_array($params) ? $params : [];
 }
 
 function irisid_rest_licensing_check_cd_key(WP_REST_Request $request): WP_REST_Response
@@ -324,10 +337,7 @@ function irisid_rest_licensing_check_ref_number(WP_REST_Request $request): WP_RE
 
 function irisid_rest_licensing_submit(WP_REST_Request $request): WP_REST_Response
 {
-    $body = $request->get_json_params();
-    if (!is_array($body)) {
-        $body = [];
-    }
+    $body = irisid_licensing_rest_body($request);
 
     $license_type = trim((string) ($body['licenseType'] ?? ''));
     $cd_key = strtoupper(preg_replace('/\s+/', '', (string) ($body['cdKey'] ?? '')) ?? '');
