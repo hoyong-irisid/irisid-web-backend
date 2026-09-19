@@ -152,17 +152,12 @@ function irisid_licensing_find_cd_key(string $input): ?array
     if ($input === '') {
         return null;
     }
-    // Match on first 5–10 characters (live used 10; headless allows earlier lookup at 5).
-    $prefix_len = strlen($input) >= 10 ? 10 : strlen($input);
-    if ($prefix_len < 5) {
-        return null;
-    }
-    $prefix = substr($input, 0, $prefix_len);
+    $prefix = substr($input, 0, 10);
     $post_id = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT ID FROM {$wpdb->posts}
          WHERE post_type = 'cd_keys'
            AND post_status = 'publish'
-           AND SUBSTRING(post_title, 1, {$prefix_len}) = %s
+           AND SUBSTRING(post_title, 1, 10) = %s
          LIMIT 1",
         $prefix
     ));
@@ -287,10 +282,10 @@ function irisid_rest_licensing_check_cd_key(WP_REST_Request $request): WP_REST_R
 {
     $cd_key = (string) $request->get_param('cdKey');
     $len = strlen(preg_replace('/\s+/', '', $cd_key) ?? '');
-    if ($len < 5 || $len > 25) {
+    if ($len !== 10 && $len !== 25) {
         return new WP_REST_Response([
             'ok' => false,
-            'error' => 'Enter at least the first 5 characters of the CD Key.',
+            'error' => 'Enter at least the first 10 characters of the CD Key.',
         ], 400);
     }
     $match = irisid_licensing_find_cd_key($cd_key);
