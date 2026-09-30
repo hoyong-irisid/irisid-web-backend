@@ -213,3 +213,113 @@ function irisid_generate_resource_excerpt($postId): void
 
     update_field('field_irisid_resource_excerpt', $excerpt, (int) $postId);
 }
+
+function irisid_resource_is_featured(int $postId): bool
+{
+    if ($postId <= 0) {
+        return false;
+    }
+    if (function_exists('get_field')) {
+        return (bool) get_field('is_featured', $postId);
+    }
+    return (bool) get_post_meta($postId, 'is_featured', true);
+}
+
+/** Pin Featured resources to the top of the wp-admin list (all resource type filters). */
+add_action('pre_get_posts', 'irisid_resource_admin_order_featured_first');
+
+function irisid_resource_admin_order_featured_first(WP_Query $query): void
+{
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+    if (($query->get('post_type') ?: '') !== 'resource') {
+        return;
+    }
+    // Respect an explicit user sort click (e.g. Date column).
+    $orderby = $query->get('orderby');
+    if (is_string($orderby) && $orderby !== '' && $orderby !== 'date' && $orderby !== 'menu_order date') {
+        return;
+    }
+
+    add_filter('posts_clauses', 'irisid_resource_featured_posts_clauses', 20, 2);
+}
+
+/**
+ * @param array<string, string> $clauses
+ * @return array<string, string>
+ */
+function irisid_resource_featured_posts_clauses(array $clauses, WP_Query $query): array
+{
+    remove_filter('posts_clauses', 'irisid_resource_featured_posts_clauses', 20);
+
+    if (!is_admin() || !$query->is_main_query() || ($query->get('post_type') ?: '') !== 'resource') {
+        return $clauses;
+    }
+
+    global $wpdb;
+    $clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS irisid_feat ON ({$wpdb->posts}.ID = irisid_feat.post_id AND irisid_feat.meta_key = 'is_featured') ";
+    $featuredOrder = "CAST(COALESCE(irisid_feat.meta_value, '0') AS UNSIGNED) DESC";
+    $clauses['orderby'] = $clauses['orderby']
+        ? $featuredOrder . ', ' . $clauses['orderby']
+        : $featuredOrder . ", {$wpdb->posts}.post_date DESC";
+
+    return $clauses;
+}
+
+/** Append a Featured badge to the right of the title in the Resources list. */
+add_filter('display_post_states', 'irisid_resource_featured_post_state', 10, 2);
+
+function irisid_resource_featured_post_state(array $states, WP_Post $post): array
+{
+    if ($post->post_type !== 'resource' || !irisid_resource_is_featured((int) $post->ID)) {
+        return $states;
+    }
+    $states['irisid_featured'] = 'Featured';
+    return $states;
+}
+
+add_filter('post_class', 'irisid_resource_featured_admin_row_class', 10, 3);
+
+function irisid_resource_featured_admin_row_class(array $classes, array $class, int $postId): array
+{
+    if (!is_admin() || get_post_type($postId) !== 'resource') {
+        return $classes;
+    }
+    if (irisid_resource_is_featured($postId)) {
+        $classes[] = 'irisid-resource-is-featured';
+    }
+    return $classes;
+}
+
+add_action('admin_head-edit.php', 'irisid_resource_featured_admin_list_styles');
+
+function irisid_resource_featured_admin_list_styles(): void
+{
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== 'resource') {
+        return;
+    }
+    echo '<style>
+      body.post-type-resource .wp-list-table tr.irisid-resource-is-featured { background-color: #fff8db !important; }
+      body.post-type-resource .wp-list-table tr.irisid-resource-is-featured th,
+      body.post-type-resource .wp-list-table tr.irisid-resource-is-featured td { background-color: transparent; }
+      body.post-type-resource .wp-list-table tr.irisid-resource-is-featured:hover { background-color: #fff3c4 !important; }
+      body.post-type-resource .wp-list-table .post-state {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 7px;
+        border-radius: 3px;
+        background: #f0c14a;
+        color: #6b5300;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      body.post-type-resource .wp-list-table tr.irisid-resource-is-featured .post-state {
+        background: #e8b923;
+        color: #3d3000;
+      }
+    </style>';
+}
