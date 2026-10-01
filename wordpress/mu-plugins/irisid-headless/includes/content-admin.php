@@ -274,8 +274,47 @@ function irisid_resource_hide_native_title(): void
         . 'margin-top:2px;}'
         . 'body.post-type-resource .acf-field.irisid-layout-hidden{'
         . 'display:none!important;}'
+        /* CSS gate: hide layout-specific fields until body has the matching class.
+           Default (no class yet) is treated as List so Add New never flashes File/Event fields. */
+        . 'body.post-type-resource #slugdiv,'
+        . 'body.post-type-resource #revisionsdiv{'
+        . 'display:none!important;}'
+        . 'body.post-type-resource:not(.irisid-layout-gallery)'
+        . ' .acf-field[data-key="field_irisid_resource_video"]{'
+        . 'display:none!important;}'
+        . 'body.post-type-resource:not(.irisid-layout-file)'
+        . ' .acf-field[data-key="field_irisid_resource_file_name"],'
+        . 'body.post-type-resource:not(.irisid-layout-file)'
+        . ' .acf-field[data-key="field_irisid_resource_attachment"]{'
+        . 'display:none!important;}'
+        . 'body.post-type-resource:not(.irisid-layout-event)'
+        . ' .acf-field[data-key="field_irisid_resource_event_date"],'
+        . 'body.post-type-resource:not(.irisid-layout-event)'
+        . ' .acf-field[data-key="field_irisid_resource_event_ends"],'
+        . 'body.post-type-resource:not(.irisid-layout-event)'
+        . ' .acf-field[data-key="field_irisid_resource_event_visibility"]{'
+        . 'display:none!important;}'
+        . 'body.post-type-resource:not(.irisid-layout-list)'
+        . ' .acf-field[data-key="field_irisid_resource_display_date"],'
+        . 'body.post-type-resource:not(.irisid-layout-list)'
+        . ' .acf-field[data-key="field_irisid_resource_show_display_date"]{'
+        . 'display:none!important;}'
+        . 'body.post-type-resource:not(.irisid-layout-list):not(.irisid-layout-event)'
+        . ' .acf-field[data-key="field_irisid_resource_body"]{'
+        . 'display:none!important;}'
         . '</style>';
     echo '<script id="irisid-resource-align-top">(function(){'
+        . 'function layoutFromDom(){'
+        . 'var checked=document.querySelector('
+        . '".acf-field[data-key=\\"field_irisid_resource_layout\\"] input[type=radio]:checked");'
+        . 'return checked&&checked.value?checked.value:"list";'
+        . '}'
+        . 'function applyLayoutClass(){'
+        . 'var layout=layoutFromDom();'
+        . '["list","gallery","file","event"].forEach(function(l){'
+        . 'document.body.classList.toggle("irisid-layout-"+l,l===layout);'
+        . '});'
+        . '}'
         . 'function align(){'
         . 'var content=document.getElementById("post-body-content");'
         . 'if(!content)return;'
@@ -286,10 +325,16 @@ function irisid_resource_hide_native_title(): void
         . 'content.insertBefore(sortables,content.firstElementChild);'
         . '}'
         . 'if(sortables){sortables.style.minHeight="0";sortables.style.height="auto";}'
+        . 'applyLayoutClass();'
         . '}'
+        . 'document.body.classList.add("irisid-layout-list");'
         . 'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",align);'
         . 'else align();'
         . 'window.addEventListener("load",align);'
+        . 'document.addEventListener("change",function(e){'
+        . 'var t=e.target;if(!t||!t.closest)return;'
+        . 'if(t.closest(".acf-field[data-key=\\"field_irisid_resource_layout\\"]"))applyLayoutClass();'
+        . '});'
         . '})();</script>';
 }
 
@@ -538,13 +583,30 @@ function irisid_resource_layout_admin_script(string $hook): void
                     LAYOUT_FIELDS[k].forEach(function (key) { ALL_LAYOUT_FIELDS[key] = true; });
                 });
 
+                function applyBodyLayoutClass(layout) {
+                    ['list', 'gallery', 'file', 'event'].forEach(function (l) {
+                        document.body.classList.toggle('irisid-layout-' + l, l === layout);
+                    });
+                }
+
                 function syncResourceFields() {
                     var layout = currentLayout();
                     if (!LAYOUT_FIELDS[layout]) layout = 'list';
+                    applyBodyLayoutClass(layout);
                     var show = {};
                     LAYOUT_FIELDS[layout].forEach(function (key) { show[key] = true; });
 
                     Object.keys(ALL_LAYOUT_FIELDS).forEach(function (key) {
+                        var els = document.querySelectorAll('.acf-field[data-key="' + key + '"]');
+                        els.forEach(function (el) {
+                            if (show[key]) {
+                                el.classList.remove('irisid-layout-hidden');
+                                el.style.display = '';
+                            } else {
+                                el.classList.add('irisid-layout-hidden');
+                                el.style.display = 'none';
+                            }
+                        });
                         var field = acf.getField(key);
                         if (!field || !field.$el || !field.$el.length) return;
                         if (show[key]) {
