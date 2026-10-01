@@ -63,35 +63,6 @@ function irisid_simplify_content_admin_menu(): void
         'manage_categories',
         'edit-tags.php?taxonomy=resource_type&post_type=resource'
     );
-
-    $types = [
-        'news-media'    => 'News & Media',
-        'press-release' => 'Press Release',
-        'events'        => 'Events',
-        'insights'      => 'Blog',
-        'videos'        => 'Videos',
-        'webinars'      => 'Webinars',
-        'iris-id-talk'  => 'Iris ID Talk',
-        'data-sheets'   => 'Data Sheets',
-        'case-studies'  => 'Case Studies',
-        'tip-sheets'    => 'Tip Sheets',
-    ];
-
-    foreach ($types as $slug => $label) {
-        add_submenu_page(
-            $parent,
-            $label,
-            $label,
-            'edit_posts',
-            add_query_arg(
-                [
-                    'post_type'     => 'resource',
-                    'resource_type' => $slug,
-                ],
-                'edit.php'
-            )
-        );
-    }
 }
 
 add_action('admin_bar_menu', 'irisid_simplify_new_content_menu', 999);
