@@ -254,6 +254,60 @@ function irisid_resource_layout_admin_script(string $hook): void
                         sheet.style.display = isFile ? '' : 'none';
                     }
 
+                    /**
+                     * Cross-group ACF conditionals are unreliable here – drive
+                     * Resource Fields visibility from the layout selector explicitly.
+                     * Keys match group_irisid_resource.json.
+                     */
+                    var LAYOUT_FIELDS = {
+                        list: [
+                            'field_irisid_resource_display_date',
+                            'field_irisid_resource_featured',
+                            'field_irisid_resource_body',
+                            'field_irisid_resource_attachment'
+                        ],
+                        gallery: [
+                            'field_irisid_resource_featured',
+                            'field_irisid_resource_video'
+                        ],
+                        file: [
+                            'field_irisid_resource_featured',
+                            'field_irisid_resource_file_name',
+                            'field_irisid_resource_attachment'
+                        ],
+                        event: [
+                            'field_irisid_resource_featured',
+                            'field_irisid_resource_body',
+                            'field_irisid_resource_event_date',
+                            'field_irisid_resource_event_ends',
+                            'field_irisid_resource_event_visibility'
+                        ]
+                    };
+                    var ALL_LAYOUT_FIELDS = {};
+                    Object.keys(LAYOUT_FIELDS).forEach(function (k) {
+                        LAYOUT_FIELDS[k].forEach(function (key) { ALL_LAYOUT_FIELDS[key] = true; });
+                    });
+
+                    function syncResourceFields() {
+                        var layout = currentLayout();
+                        if (!LAYOUT_FIELDS[layout]) layout = 'list';
+                        var show = {};
+                        LAYOUT_FIELDS[layout].forEach(function (key) { show[key] = true; });
+
+                        Object.keys(ALL_LAYOUT_FIELDS).forEach(function (key) {
+                            var field = acf.getField(key);
+                            if (!field || !field.$el || !field.$el.length) return;
+                            if (show[key]) {
+                                field.show();
+                                field.$el.removeClass('irisid-layout-hidden');
+                            } else {
+                                field.hide();
+                                field.$el.addClass('irisid-layout-hidden');
+                            }
+                        });
+                        syncSheetPanel();
+                    }
+
                     function layoutFromCheckedTypes() {
                         var layouts = [];
                         var inputs = document.querySelectorAll(
@@ -285,10 +339,10 @@ function irisid_resource_layout_admin_script(string $hook): void
                                 layoutField.val(next);
                             }
                         }
-                        syncSheetPanel();
+                        syncResourceFields();
                     }
 
-                    layoutField.on('change', syncSheetPanel);
+                    layoutField.on('change', syncResourceFields);
                     document.addEventListener('change', function (e) {
                         var t = e.target;
                         if (!t || !t.closest) return;
@@ -298,7 +352,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                     });
 
                     maybeApplyFromTaxonomy();
-                    syncSheetPanel();
+                    syncResourceFields();
                 });
             }
 
