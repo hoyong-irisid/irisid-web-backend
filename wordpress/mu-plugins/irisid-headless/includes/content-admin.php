@@ -202,8 +202,15 @@ function irisid_resource_admin_column_content(string $column, int $post_id): voi
     echo esc_html($labels[$layout]);
 }
 
-/** Description (excerpt) is edited for Gallery/Event cards; List keeps auto excerpt from Body. */
+/** Description (excerpt) is edited for Event cards; List keeps auto excerpt from Body. */
 /** Keep Related / External out of the day-to-day layout editors (still in GraphQL). */
+add_filter('acf/load_value/key=field_irisid_resource_layout', 'irisid_resource_layout_drop_gallery', 10, 1);
+
+function irisid_resource_layout_drop_gallery($value)
+{
+    return $value === 'gallery' ? 'list' : $value;
+}
+
 add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_solutions', '__return_false');
@@ -249,11 +256,9 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field.irisid-show-display-date{clear:none;}'
         . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-switch{margin-top:2px;}'
         . 'body.post-type-resource .acf-field.irisid-layout-hidden{display:none!important;}'
-        . 'body.post-type-resource.irisid-layout-list .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="list"]),'
-        . 'body.post-type-resource.irisid-layout-gallery .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="gallery"]),'
-        . 'body.post-type-resource.irisid-layout-file .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="file"]),'
-        . 'body.post-type-resource.irisid-layout-event .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="event"]){'
-        . 'display:none!important;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-checkbox-list,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-radio-list{'
+        . 'display:flex;flex-wrap:wrap;gap:8px 18px;margin:0;}'
         . '</style>';
     echo '<script id="irisid-resource-align-top">(function(){'
         . 'function align(){'
@@ -546,13 +551,8 @@ function irisid_resource_layout_admin_script(string $hook): void
                 list: [
                     'field_irisid_resource_display_date',
                     'field_irisid_resource_show_display_date',
-                    'field_irisid_resource_body'
-                ],
-                gallery: [
                     'field_irisid_resource_video',
-                    'field_irisid_resource_display_date',
-                    'field_irisid_resource_show_display_date',
-                    'field_irisid_resource_excerpt'
+                    'field_irisid_resource_body'
                 ],
                 file: [
                     'field_irisid_resource_file_name',
@@ -568,16 +568,6 @@ function irisid_resource_layout_admin_script(string $hook): void
             };
             var ORDER = {
                 list: ALWAYS.concat(BY_LAYOUT.list),
-                gallery: [
-                    'field_irisid_resource_layout',
-                    'field_irisid_resource_kind',
-                    'field_irisid_resource_title',
-                    'field_irisid_resource_video',
-                    'field_irisid_resource_featured',
-                    'field_irisid_resource_display_date',
-                    'field_irisid_resource_show_display_date',
-                    'field_irisid_resource_excerpt'
-                ],
                 file: ALWAYS.concat(BY_LAYOUT.file),
                 event: [
                     'field_irisid_resource_layout',
@@ -615,7 +605,8 @@ function irisid_resource_layout_admin_script(string $hook): void
                 bound = true;
 
                 function currentLayout() {
-                    return String(layoutField.val() || 'list');
+                    var value = String(layoutField.val() || 'list');
+                    return value === 'gallery' ? 'list' : value;
                 }
 
                 function fieldEl(key) {
@@ -632,27 +623,18 @@ function irisid_resource_layout_admin_script(string $hook): void
                 }
 
                 function applyBodyLayoutClass(layout) {
-                    ['list', 'gallery', 'file', 'event'].forEach(function (l) {
+                    ['list', 'file', 'event'].forEach(function (l) {
                         document.body.classList.toggle('irisid-layout-' + l, l === layout);
                     });
                 }
 
-                function filterCategories() {
-                    var layout = currentLayout();
+                function showAllCategories() {
                     var wrap = fieldEl('field_irisid_resource_kind') ||
                         document.querySelector('.acf-field[data-name="resource_kind"]');
                     if (!wrap) return;
                     wrap.querySelectorAll('li').forEach(function (li) {
-                        var input = li.querySelector('input');
-                        if (!input) return;
-                        var termLayout = TERM_ID_TO_LAYOUT[String(input.value)] || 'list';
-                        li.setAttribute('data-term-layout', termLayout);
-                        var ok = termLayout === layout;
-                        li.style.display = ok ? '' : 'none';
-                        li.hidden = !ok;
-                        if (!ok && input.checked) {
-                            input.checked = false;
-                        }
+                        li.style.display = '';
+                        li.hidden = false;
                     });
                 }
 
@@ -692,7 +674,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                     });
                     applyBodyLayoutClass(layout);
                     reorderFields(layout);
-                    filterCategories();
+                    showAllCategories();
                     syncSheetPanel();
                 }
 
