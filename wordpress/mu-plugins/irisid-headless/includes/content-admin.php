@@ -150,7 +150,43 @@ add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_fal
 add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_solutions', '__return_false');
 
+/**
+ * Resource Type (layout) sits first via acf_after_title.
+ * Hide the native WP title so editors use Title inside Resource Fields instead.
+ */
+add_action('admin_head', 'irisid_resource_hide_native_title');
+
+function irisid_resource_hide_native_title(): void
+{
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== 'resource') {
+        return;
+    }
+    echo '<style id="irisid-resource-title-order">'
+        . 'body.post-type-resource #titlediv{display:none!important;}'
+        . 'body.post-type-resource #acf-group_irisid_resource_layout{margin-top:0;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_title"] input[type="text"]{'
+        . 'font-size:1.4em;padding:8px 10px;width:100%;}'
+        . '</style>';
+}
+
+/** Prefill ACF Title from the real post_title when editing. */
+add_filter('acf/load_value/key=field_irisid_resource_title', 'irisid_resource_title_load_value', 10, 2);
+
+function irisid_resource_title_load_value($value, $postId)
+{
+    if (!is_numeric($postId)) {
+        return $value;
+    }
+    if (is_string($value) && trim($value) !== '') {
+        return $value;
+    }
+    $title = get_post_field('post_title', (int) $postId);
+    return is_string($title) ? $title : $value;
+}
+
 add_action('acf/save_post', 'irisid_generate_resource_excerpt', 20);
+add_action('acf/save_post', 'irisid_sync_resource_title_to_post', 25);
 
 function irisid_generate_resource_excerpt($postId): void
 {
@@ -163,6 +199,30 @@ function irisid_generate_resource_excerpt($postId): void
     $excerpt = $plainText === '' ? '' : wp_trim_words($plainText, 32, '…');
 
     update_field('field_irisid_resource_excerpt', $excerpt, (int) $postId);
+}
+
+/** Copy Resource Fields → Title into the WordPress post_title. */
+function irisid_sync_resource_title_to_post($postId): void
+{
+    if (!is_numeric($postId) || get_post_type((int) $postId) !== 'resource') {
+        return;
+    }
+    $postId = (int) $postId;
+    $title = trim((string) get_field('resource_title', $postId));
+    if ($title === '') {
+        return;
+    }
+    $current = get_post_field('post_title', $postId);
+    if (is_string($current) && $current === $title) {
+        return;
+    }
+
+    remove_action('acf/save_post', 'irisid_sync_resource_title_to_post', 25);
+    wp_update_post([
+        'ID'         => $postId,
+        'post_title' => $title,
+    ]);
+    add_action('acf/save_post', 'irisid_sync_resource_title_to_post', 25);
 }
 
 /**
