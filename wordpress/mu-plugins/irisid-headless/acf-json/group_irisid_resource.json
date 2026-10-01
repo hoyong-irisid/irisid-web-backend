@@ -25,10 +25,15 @@
       "label": "Display date",
       "name": "display_date",
       "type": "date_picker",
-      "instructions": "Optional. Shown on list cards instead of the publish date when set.",
+      "instructions": "Override date shown on the site when Show is checked.",
       "display_format": "F j, Y",
       "return_format": "Y-m-d",
       "first_day": 0,
+      "wrapper": {
+        "width": "50",
+        "class": "irisid-display-date",
+        "id": ""
+      },
       "conditional_logic": [
         [
           {
@@ -40,6 +45,33 @@
       ],
       "show_in_graphql": 1,
       "graphql_field_name": "displayDate"
+    },
+    {
+      "key": "field_irisid_resource_show_display_date",
+      "label": "Show",
+      "name": "show_display_date",
+      "type": "true_false",
+      "instructions": "Use Display date on the public site instead of the publish date.",
+      "ui": 1,
+      "ui_on_text": "Yes",
+      "ui_off_text": "No",
+      "default_value": 0,
+      "wrapper": {
+        "width": "50",
+        "class": "irisid-show-display-date",
+        "id": ""
+      },
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "showDisplayDate"
     },
     {
       "key": "field_irisid_resource_featured",
@@ -153,13 +185,6 @@
       "return_format": "array",
       "instructions": "File to download (PDF or other). For multi-language Data/Tip Sheets, prefer Language Files in the sheet panel below.",
       "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "list"
-          }
-        ],
         [
           {
             "field": "field_irisid_resource_layout",
@@ -282,7 +307,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789262000,
+  "modified": 1789269000,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"

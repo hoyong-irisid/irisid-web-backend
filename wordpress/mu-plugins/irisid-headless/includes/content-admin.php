@@ -117,7 +117,9 @@ add_action('admin_notices', 'irisid_resource_editor_notice');
 function irisid_resource_editor_notice(): void
 {
     $screen = get_current_screen();
-    if (!$screen || $screen->post_type !== 'resource') {
+    // List screen only – keep edit/new screens clear so Resource Type
+    // aligns with the Publish box at the top of the form.
+    if (!$screen || $screen->post_type !== 'resource' || $screen->base !== 'edit') {
         return;
     }
 
@@ -141,6 +143,69 @@ function irisid_simplify_resource_editor_supports(): void
 {
     remove_post_type_support('resource', 'editor');
     remove_post_type_support('resource', 'thumbnail');
+    remove_post_type_support('resource', 'revisions');
+}
+
+/** Drop Slug + Revisions meta boxes – List editors do not need them. */
+add_action('add_meta_boxes', 'irisid_remove_resource_clutter_metaboxes', 99);
+
+function irisid_remove_resource_clutter_metaboxes(): void
+{
+    remove_meta_box('revisionsdiv', 'resource', 'normal');
+    remove_meta_box('slugdiv', 'resource', 'normal');
+    remove_meta_box('slugdiv', 'resource', 'side');
+}
+
+/**
+ * Resources list: Type (List/Gallery/File/Event) column immediately left of Date.
+ *
+ * @param array<string, string> $columns
+ * @return array<string, string>
+ */
+add_filter('manage_edit-resource_columns', 'irisid_resource_admin_columns');
+
+function irisid_resource_admin_columns(array $columns): array
+{
+    $with_type = [];
+    foreach ($columns as $key => $label) {
+        if ($key === 'date') {
+            $with_type['irisid_layout'] = 'Type';
+        }
+        $with_type[$key] = $label;
+    }
+    if (!isset($with_type['irisid_layout'])) {
+        $with_type['irisid_layout'] = 'Type';
+    }
+    return $with_type;
+}
+
+add_action('manage_resource_posts_custom_column', 'irisid_resource_admin_column_content', 10, 2);
+
+function irisid_resource_admin_column_content(string $column, int $post_id): void
+{
+    if ($column !== 'irisid_layout') {
+        return;
+    }
+    $layout = (string) get_field('resource_layout', $post_id);
+    $labels = [
+        'list'    => 'List',
+        'gallery' => 'Gallery',
+        'file'    => 'File',
+        'event'   => 'Event',
+    ];
+    if ($layout === '' || !isset($labels[$layout])) {
+        $terms = wp_get_post_terms($post_id, 'resource_type', ['fields' => 'slugs']);
+        if (!is_wp_error($terms)) {
+            foreach ($terms as $slug) {
+                $mapped = irisid_resource_layout_for_type_slug((string) $slug);
+                if ($mapped !== null) {
+                    $layout = $mapped;
+                    break;
+                }
+            }
+        }
+    }
+    echo esc_html($labels[$layout] ?? '–');
 }
 
 /** Excerpt is generated from Body and is not a manual editor field. */
@@ -151,7 +216,7 @@ add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_fal
 add_filter('acf/prepare_field/key=field_irisid_resource_solutions', '__return_false');
 
 /**
- * Resource Type (layout) sits first via acf_after_title.
+ * Resource Type sits in acf_after_title (top, aligned with Publish).
  * Hide the native WP title so editors use Title inside Resource Fields instead.
  */
 add_action('admin_head', 'irisid_resource_hide_native_title');
@@ -163,11 +228,69 @@ function irisid_resource_hide_native_title(): void
         return;
     }
     echo '<style id="irisid-resource-title-order">'
-        . 'body.post-type-resource #titlediv{display:none!important;}'
-        . 'body.post-type-resource #acf-group_irisid_resource_layout{margin-top:0;}'
+        . 'body.post-type-resource #titlediv,'
+        . 'body.post-type-resource #titlewrap,'
+        . 'body.post-type-resource #edit-slug-box{'
+        . 'display:none!important;height:0!important;margin:0!important;padding:0!important;'
+        . 'border:0!important;overflow:hidden!important;}'
+        . 'body.post-type-resource #post-body-content{'
+        . 'margin-top:0!important;padding-top:0!important;}'
+        /* Keep after_title visible; kill sortable empty-height that made a huge gap. */
+        . 'body.post-type-resource #acf_after_title-sortables{'
+        . 'margin:0!important;padding:0!important;min-height:0!important;height:auto!important;}'
+        . 'body.post-type-resource #acf_after_title-sortables .ui-sortable-placeholder{'
+        . 'display:none!important;height:0!important;margin:0!important;padding:0!important;}'
+        . 'body.post-type-resource #acf-group_irisid_resource_layout{'
+        . 'margin:0 0 20px!important;}'
+        . 'body.post-type-resource #normal-sortables{'
+        . 'margin-top:0!important;padding-top:0!important;min-height:0!important;}'
+        . 'body.post-type-resource #normal-sortables > .postbox,'
+        . 'body.post-type-resource #side-sortables > .postbox{'
+        . 'margin-bottom:20px!important;}'
+        . 'body.post-type-resource #post-body-content > .meta-box-sortables{'
+        . 'min-height:0!important;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"]{padding-top:12px;padding-bottom:6px;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list{'
+        . 'display:flex;flex-wrap:wrap;gap:14px 20px;margin:0;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list li{margin:0;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list label{'
+        . 'font-size:13px;font-weight:600;color:#1d2327;}'
+        . 'body.post-type-resource .acf-field[data-key^="field_irisid_resource_layout_help_"]{'
+        . 'padding-top:2px;padding-bottom:12px;border-top:0!important;}'
+        . 'body.post-type-resource .acf-field[data-key^="field_irisid_resource_layout_help_"] .acf-label{display:none!important;}'
+        . 'body.post-type-resource .acf-field[data-key^="field_irisid_resource_layout_help_"] .acf-input,'
+        . 'body.post-type-resource .acf-field[data-key^="field_irisid_resource_layout_help_"] .acf-input p{'
+        . 'font-size:13px;line-height:1.5;color:#646970;margin:0;}'
+        . 'body.post-type-resource .irisid-layout-help{display:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_title"] input[type="text"]{'
         . 'font-size:1.4em;padding:8px 10px;width:100%;}'
+        /* Display date (half) + Show checkbox on the same row. */
+        . 'body.post-type-resource .acf-field.irisid-display-date,'
+        . 'body.post-type-resource .acf-field.irisid-show-display-date{'
+        . 'clear:none;}'
+        . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-label{'
+        . 'margin-bottom:8px;}'
+        . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-switch{'
+        . 'margin-top:2px;}'
+        . 'body.post-type-resource .acf-field.irisid-layout-hidden{'
+        . 'display:none!important;}'
         . '</style>';
+    echo '<script id="irisid-resource-align-top">(function(){'
+        . 'function align(){'
+        . 'var content=document.getElementById("post-body-content");'
+        . 'if(!content)return;'
+        . 'var title=document.getElementById("titlediv");'
+        . 'if(title)title.remove();'
+        . 'var sortables=document.getElementById("acf_after_title-sortables");'
+        . 'if(sortables&&content.firstElementChild!==sortables){'
+        . 'content.insertBefore(sortables,content.firstElementChild);'
+        . '}'
+        . 'if(sortables){sortables.style.minHeight="0";sortables.style.height="auto";}'
+        . '}'
+        . 'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",align);'
+        . 'else align();'
+        . 'window.addEventListener("load",align);'
+        . '})();</script>';
 }
 
 /** Prefill ACF Title from the real post_title when editing. */
@@ -288,136 +411,208 @@ function irisid_resource_layout_admin_script(string $hook): void
     $typeJson = wp_json_encode($typeToLayout);
     $termJson = wp_json_encode($termIdToSlug);
 
+    // Must run after ACF – jquery-core alone fires before `acf` exists.
+    wp_enqueue_script('acf-input');
     wp_add_inline_script(
-        'jquery-core',
+        'acf-input',
         <<<JS
         (function () {
             var TYPE_TO_LAYOUT = {$typeJson};
             var TERM_ID_TO_SLUG = {$termJson};
+            var LAYOUT_HELP = {
+                list: {
+                    title: 'List',
+                    body: 'News & Media, Press Release, Blog, Iris ID Talk, Case Studies'
+                },
+                gallery: {
+                    title: 'Gallery',
+                    body: 'Videos, Webinars'
+                },
+                file: {
+                    title: 'File',
+                    body: 'Data Sheets, Tip Sheets, Use Cases & White Papers'
+                },
+                event: {
+                    title: 'Event',
+                    body: 'Events & Exhibition'
+                }
+            };
 
-            function boot() {
-                if (typeof acf === 'undefined') return;
-                acf.addAction('ready', function () {
-                    var layoutField = acf.getField('field_irisid_resource_layout');
-                    if (!layoutField) return;
-
-                    function currentLayout() {
-                        return String(layoutField.val() || 'list');
-                    }
-
-                    function syncSheetPanel() {
-                        var isFile = currentLayout() === 'file';
-                        var sheet =
-                            document.getElementById('acf-group_irisid_resource_sheet') ||
-                            document.querySelector('.postbox[id*="group_irisid_resource_sheet"]');
-                        if (!sheet) return;
-                        sheet.style.display = isFile ? '' : 'none';
-                    }
-
-                    /**
-                     * Cross-group ACF conditionals are unreliable here – drive
-                     * Resource Fields visibility from the layout selector explicitly.
-                     * Keys match group_irisid_resource.json.
-                     */
-                    var LAYOUT_FIELDS = {
-                        list: [
-                            'field_irisid_resource_display_date',
-                            'field_irisid_resource_featured',
-                            'field_irisid_resource_body',
-                            'field_irisid_resource_attachment'
-                        ],
-                        gallery: [
-                            'field_irisid_resource_featured',
-                            'field_irisid_resource_video'
-                        ],
-                        file: [
-                            'field_irisid_resource_featured',
-                            'field_irisid_resource_file_name',
-                            'field_irisid_resource_attachment'
-                        ],
-                        event: [
-                            'field_irisid_resource_featured',
-                            'field_irisid_resource_body',
-                            'field_irisid_resource_event_date',
-                            'field_irisid_resource_event_ends',
-                            'field_irisid_resource_event_visibility'
-                        ]
-                    };
-                    var ALL_LAYOUT_FIELDS = {};
-                    Object.keys(LAYOUT_FIELDS).forEach(function (k) {
-                        LAYOUT_FIELDS[k].forEach(function (key) { ALL_LAYOUT_FIELDS[key] = true; });
-                    });
-
-                    function syncResourceFields() {
-                        var layout = currentLayout();
-                        if (!LAYOUT_FIELDS[layout]) layout = 'list';
-                        var show = {};
-                        LAYOUT_FIELDS[layout].forEach(function (key) { show[key] = true; });
-
-                        Object.keys(ALL_LAYOUT_FIELDS).forEach(function (key) {
-                            var field = acf.getField(key);
-                            if (!field || !field.$el || !field.$el.length) return;
-                            if (show[key]) {
-                                field.show();
-                                field.$el.removeClass('irisid-layout-hidden');
-                            } else {
-                                field.hide();
-                                field.$el.addClass('irisid-layout-hidden');
-                            }
-                        });
-                        syncSheetPanel();
-                    }
-
-                    function layoutFromCheckedTypes() {
-                        var layouts = [];
-                        var inputs = document.querySelectorAll(
-                            '#resource_typediv input[type="checkbox"], #taxonomy-resource_type input[type="checkbox"]'
-                        );
-                        inputs.forEach(function (input) {
-                            if (!input.checked) return;
-                            var slug = TERM_ID_TO_SLUG[String(input.value)] || '';
-                            if (slug && TYPE_TO_LAYOUT[slug]) {
-                                layouts.push(TYPE_TO_LAYOUT[slug]);
-                            }
-                        });
-                        if (!layouts.length) return null;
-                        if (layouts.indexOf('event') !== -1) return 'event';
-                        if (layouts.indexOf('file') !== -1) return 'file';
-                        if (layouts.indexOf('gallery') !== -1) return 'gallery';
-                        return 'list';
-                    }
-
-                    var manualOverride = false;
-                    layoutField.$el.on('click', 'input, button, .acf-button-group label', function () {
-                        manualOverride = true;
-                    });
-
-                    function maybeApplyFromTaxonomy() {
-                        if (!manualOverride) {
-                            var next = layoutFromCheckedTypes();
-                            if (next && next !== currentLayout()) {
-                                layoutField.val(next);
-                            }
-                        }
-                        syncResourceFields();
-                    }
-
-                    layoutField.on('change', syncResourceFields);
-                    document.addEventListener('change', function (e) {
-                        var t = e.target;
-                        if (!t || !t.closest) return;
-                        if (t.closest('#resource_typediv') || t.closest('#taxonomy-resource_type')) {
-                            maybeApplyFromTaxonomy();
-                        }
-                    });
-
-                    maybeApplyFromTaxonomy();
-                    syncResourceFields();
-                });
+            function start() {
+                if (typeof acf === 'undefined') {
+                    window.setTimeout(start, 50);
+                    return;
+                }
+                acf.addAction('ready', bindLayoutUi);
+                // If ACF already fired ready before this script attached:
+                if (acf.getField && acf.getField('field_irisid_resource_layout')) {
+                    bindLayoutUi();
+                }
             }
 
-            if (window.acf) boot();
-            else document.addEventListener('DOMContentLoaded', boot);
+            var bound = false;
+            function bindLayoutUi() {
+                if (bound) return;
+                var layoutField = acf.getField('field_irisid_resource_layout');
+                if (!layoutField) return;
+                bound = true;
+
+                function currentLayout() {
+                    return String(layoutField.val() || 'list');
+                }
+
+                function ensureHelpEl() {
+                    var existing = document.getElementById('irisid-layout-help');
+                    if (existing) return existing;
+
+                    var help = document.createElement('div');
+                    help.id = 'irisid-layout-help';
+                    help.className = 'irisid-layout-help';
+                    help.setAttribute('aria-live', 'polite');
+
+                    // Prefer inside the field input; fall back to the Resource Type postbox.
+                    var input = layoutField.$el && layoutField.$el.find
+                        ? layoutField.$el.find('.acf-input').get(0)
+                        : null;
+                    if (input) {
+                        input.appendChild(help);
+                        return help;
+                    }
+                    var box =
+                        document.querySelector('#acf-group_irisid_resource_layout .inside') ||
+                        document.querySelector('.postbox[id*="group_irisid_resource_layout"] .inside');
+                    if (box) {
+                        box.appendChild(help);
+                        return help;
+                    }
+                    return null;
+                }
+
+                function syncLayoutHelp() {
+                    var help = ensureHelpEl();
+                    if (!help) return;
+                    var layout = currentLayout();
+                    var copy = LAYOUT_HELP[layout] || LAYOUT_HELP.list;
+                    help.innerHTML =
+                        '<strong>' + copy.title + '</strong>' +
+                        '<div>' + copy.body + '</div>';
+                }
+
+                function syncSheetPanel() {
+                    var isFile = currentLayout() === 'file';
+                    var sheet =
+                        document.getElementById('acf-group_irisid_resource_sheet') ||
+                        document.querySelector('.postbox[id*="group_irisid_resource_sheet"]');
+                    if (!sheet) return;
+                    sheet.style.display = isFile ? '' : 'none';
+                }
+
+                // List: title/excerpt/display date/image/body only.
+                // Gallery/File/Event own video, file, attachment, and event fields.
+                var LAYOUT_FIELDS = {
+                    list: [
+                        'field_irisid_resource_display_date',
+                        'field_irisid_resource_show_display_date',
+                        'field_irisid_resource_featured',
+                        'field_irisid_resource_body'
+                    ],
+                    gallery: [
+                        'field_irisid_resource_featured',
+                        'field_irisid_resource_video'
+                    ],
+                    file: [
+                        'field_irisid_resource_featured',
+                        'field_irisid_resource_file_name',
+                        'field_irisid_resource_attachment'
+                    ],
+                    event: [
+                        'field_irisid_resource_featured',
+                        'field_irisid_resource_body',
+                        'field_irisid_resource_event_date',
+                        'field_irisid_resource_event_ends',
+                        'field_irisid_resource_event_visibility'
+                    ]
+                };
+                var ALL_LAYOUT_FIELDS = {};
+                Object.keys(LAYOUT_FIELDS).forEach(function (k) {
+                    LAYOUT_FIELDS[k].forEach(function (key) { ALL_LAYOUT_FIELDS[key] = true; });
+                });
+
+                function syncResourceFields() {
+                    var layout = currentLayout();
+                    if (!LAYOUT_FIELDS[layout]) layout = 'list';
+                    var show = {};
+                    LAYOUT_FIELDS[layout].forEach(function (key) { show[key] = true; });
+
+                    Object.keys(ALL_LAYOUT_FIELDS).forEach(function (key) {
+                        var field = acf.getField(key);
+                        if (!field || !field.$el || !field.$el.length) return;
+                        if (show[key]) {
+                            field.show();
+                            field.$el.removeClass('irisid-layout-hidden');
+                        } else {
+                            field.hide();
+                            field.$el.addClass('irisid-layout-hidden');
+                        }
+                    });
+                    syncSheetPanel();
+                    syncLayoutHelp();
+                }
+
+                function layoutFromCheckedTypes() {
+                    var layouts = [];
+                    var inputs = document.querySelectorAll(
+                        '#resource_typediv input[type="checkbox"], #taxonomy-resource_type input[type="checkbox"]'
+                    );
+                    inputs.forEach(function (input) {
+                        if (!input.checked) return;
+                        var slug = TERM_ID_TO_SLUG[String(input.value)] || '';
+                        if (slug && TYPE_TO_LAYOUT[slug]) {
+                            layouts.push(TYPE_TO_LAYOUT[slug]);
+                        }
+                    });
+                    if (!layouts.length) return null;
+                    if (layouts.indexOf('event') !== -1) return 'event';
+                    if (layouts.indexOf('file') !== -1) return 'file';
+                    if (layouts.indexOf('gallery') !== -1) return 'gallery';
+                    return 'list';
+                }
+
+                var manualOverride = false;
+                layoutField.$el.on('click', 'input[type="radio"], label', function () {
+                    manualOverride = true;
+                    // Radio updates value after the click handler – refresh next tick.
+                    window.setTimeout(function () {
+                        syncResourceFields();
+                    }, 0);
+                });
+
+                function maybeApplyFromTaxonomy() {
+                    if (!manualOverride) {
+                        var next = layoutFromCheckedTypes();
+                        if (next && next !== currentLayout()) {
+                            layoutField.val(next);
+                        }
+                    }
+                    syncResourceFields();
+                }
+
+                layoutField.on('change', function () {
+                    syncResourceFields();
+                });
+                document.addEventListener('change', function (e) {
+                    var t = e.target;
+                    if (!t || !t.closest) return;
+                    if (t.closest('#resource_typediv') || t.closest('#taxonomy-resource_type')) {
+                        maybeApplyFromTaxonomy();
+                    }
+                });
+
+                maybeApplyFromTaxonomy();
+                syncResourceFields();
+            }
+
+            start();
         })();
         JS,
         'after'
