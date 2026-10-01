@@ -166,20 +166,33 @@ add_filter('manage_edit-resource_columns', 'irisid_resource_admin_columns');
 
 function irisid_resource_admin_columns(array $columns): array
 {
-    $with_type = [];
-    foreach ($columns as $key => $label) {
-        if ($key === 'date') {
-            $with_type['irisid_layout'] = 'Type';
-        }
-        $with_type[$key] = $label;
-    }
-    if (!isset($with_type['irisid_layout'])) {
-        $with_type['irisid_layout'] = 'Type';
-    }
-    return $with_type;
+    // Keep only checkbox + title + Type + date so Title can use the width.
+    $cb = $columns['cb'] ?? '';
+    $title = $columns['title'] ?? 'Title';
+    $date = $columns['date'] ?? 'Date';
+    return [
+        'cb'             => $cb,
+        'title'          => $title,
+        'irisid_layout'  => 'Type',
+        'date'           => $date,
+    ];
 }
 
 add_action('manage_resource_posts_custom_column', 'irisid_resource_admin_column_content', 10, 2);
+add_action('admin_head-edit.php', 'irisid_resource_list_column_styles');
+
+function irisid_resource_list_column_styles(): void
+{
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== 'resource') {
+        return;
+    }
+    echo '<style id="irisid-resource-list-cols">'
+        . '.wp-list-table.fixed .column-irisid_layout{width:88px;}'
+        . '.wp-list-table.fixed .column-date{width:140px;}'
+        . '.wp-list-table.fixed .column-title{width:auto;}'
+        . '</style>';
+}
 
 function irisid_resource_admin_column_content(string $column, int $post_id): void
 {
@@ -193,19 +206,11 @@ function irisid_resource_admin_column_content(string $column, int $post_id): voi
         'file'    => 'File',
         'event'   => 'Event',
     ];
+    // Default everything to List until an editor explicitly picks another type.
     if ($layout === '' || !isset($labels[$layout])) {
-        $terms = wp_get_post_terms($post_id, 'resource_type', ['fields' => 'slugs']);
-        if (!is_wp_error($terms)) {
-            foreach ($terms as $slug) {
-                $mapped = irisid_resource_layout_for_type_slug((string) $slug);
-                if ($mapped !== null) {
-                    $layout = $mapped;
-                    break;
-                }
-            }
-        }
+        $layout = 'list';
     }
-    echo esc_html($labels[$layout] ?? '–');
+    echo esc_html($labels[$layout]);
 }
 
 /** Description (excerpt) is edited for Gallery/Event cards; List keeps auto excerpt from Body. */
@@ -677,28 +682,10 @@ function irisid_resource_layout_admin_script(string $hook): void
                     }, 0);
                 });
 
-                function maybeApplyFromTaxonomy() {
-                    if (!manualOverride) {
-                        var next = layoutFromCheckedTypes();
-                        if (next && next !== currentLayout()) {
-                            layoutField.val(next);
-                        }
-                    }
-                    syncResourceFields();
-                }
-
+                // Default Type is List. Do not auto-flip from Resource Types taxonomy.
                 layoutField.on('change', function () {
                     syncResourceFields();
                 });
-                document.addEventListener('change', function (e) {
-                    var t = e.target;
-                    if (!t || !t.closest) return;
-                    if (t.closest('#resource_typediv') || t.closest('#taxonomy-resource_type')) {
-                        maybeApplyFromTaxonomy();
-                    }
-                });
-
-                maybeApplyFromTaxonomy();
                 syncResourceFields();
             }
 
@@ -710,8 +697,8 @@ function irisid_resource_layout_admin_script(string $hook): void
 }
 
 /**
- * Backfill resource_layout from taxonomy for posts that do not have it yet.
- * Runs once per edit-screen load (cheap) and on save.
+ * Default resource_layout to List when unset.
+ * Editors can still switch to Gallery / File / Event manually.
  */
 add_action('acf/save_post', 'irisid_ensure_resource_layout_on_save', 5);
 
@@ -725,25 +712,53 @@ function irisid_ensure_resource_layout_on_save($postId): void
     if (is_string($existing) && $existing !== '') {
         return;
     }
-    $terms = wp_get_post_terms($postId, 'resource_type', ['fields' => 'slugs']);
-    if (is_wp_error($terms) || !$terms) {
-        update_field('field_irisid_resource_layout', 'list', $postId);
+    update_field('field_irisid_resource_layout', 'list', $postId);
+}
+
+/**
+ * One-time: reset every resource Type to List (starting default).
+ * Flag option avoids re-running after editors intentionally pick Gallery/File/Event.
+ */
+add_action('admin_init', 'irisid_reset_resource_layouts_to_list_once');
+
+function irisid_reset_resource_layouts_to_list_once(): void
+{
+    if (get_option('irisid_resource_layouts_defaulted_to_list_v1')) {
         return;
     }
-    $layout = 'list';
-    foreach ($terms as $slug) {
-        $mapped = irisid_resource_layout_for_type_slug((string) $slug);
-        if ($mapped === 'event') {
-            $layout = 'event';
-            break;
-        }
-        if ($mapped === 'file') {
-            $layout = 'file';
-        } elseif ($mapped === 'gallery' && $layout !== 'file') {
-            $layout = 'gallery';
-        } elseif ($mapped === 'list' && $layout === 'list') {
-            $layout = 'list';
-        }
+    if (!current_user_can('manage_options')) {
+        return;
     }
-    update_field('field_irisid_resource_layout', $layout, $postId);
+
+    global $wpdb;
+    // ACF stores the value under resource_layout and the field key under _resource_layout.
+    $wpdb->query(
+        "UPDATE {$wpdb->postmeta} pm
+         INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+         SET pm.meta_value = 'list'
+         WHERE p.post_type = 'resource'
+           AND pm.meta_key = 'resource_layout'"
+    );
+    $wpdb->query(
+        "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
+         SELECT p.ID, 'resource_layout', 'list'
+         FROM {$wpdb->posts} p
+         WHERE p.post_type = 'resource'
+           AND NOT EXISTS (
+             SELECT 1 FROM {$wpdb->postmeta} pm
+             WHERE pm.post_id = p.ID AND pm.meta_key = 'resource_layout'
+           )"
+    );
+    $wpdb->query(
+        "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
+         SELECT p.ID, '_resource_layout', 'field_irisid_resource_layout'
+         FROM {$wpdb->posts} p
+         WHERE p.post_type = 'resource'
+           AND NOT EXISTS (
+             SELECT 1 FROM {$wpdb->postmeta} pm
+             WHERE pm.post_id = p.ID AND pm.meta_key = '_resource_layout'
+           )"
+    );
+
+    update_option('irisid_resource_layouts_defaulted_to_list_v1', 1, false);
 }
