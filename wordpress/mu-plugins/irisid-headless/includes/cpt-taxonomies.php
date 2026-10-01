@@ -124,7 +124,8 @@ function irisid_register_post_types(): void
         // No 'editor': the notice body is the notice_body ACF field (see
         // group_irisid_site_notice.json) so it lives in the same panel as the
         // rest of the notice's fields instead of a separate block editor area.
-        'supports'            => ['title', 'revisions', 'custom-fields'],
+        // No 'revisions' / slug UI – keep the edit screen as lean as OLM banners.
+        'supports'            => ['title', 'custom-fields'],
         'rewrite'             => false,
         'graphql_single_name' => 'siteNotice',
         'graphql_plural_name' => 'siteNotices',

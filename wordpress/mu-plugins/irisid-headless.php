@@ -30,13 +30,11 @@ add_action('acf/init', 'irisid_register_acf_options_pages');
 add_action('rest_api_init', 'irisid_register_admin_rest_routes');
 add_action('rest_api_init', 'irisid_register_licensing_rest_routes');
 
-add_filter('acf/settings/save_json', 'irisid_acf_json_save_path');
+// Load field groups from the mu-plugin acf-json folder. Do not write JSON
+// back from WP Admin – duplicate/empty saves have wiped groups on cms before.
+// Field definitions are owned by git; deploy + acf_import_field_group to update.
+add_filter('acf/settings/save_json', '__return_false');
 add_filter('acf/settings/load_json', 'irisid_acf_json_load_paths');
-
-function irisid_acf_json_save_path(string $path): string
-{
-    return IRISID_HEADLESS_DIR . '/acf-json';
-}
 
 /** @param array<int, string> $paths */
 function irisid_acf_json_load_paths(array $paths): array
