@@ -1,99 +1,7 @@
 {
   "key": "group_irisid_resource_layout",
-  "title": "Resource Type",
-  "fields": [
-    {
-      "key": "field_irisid_resource_layout",
-      "label": "Type",
-      "name": "resource_layout",
-      "type": "radio",
-      "instructions": "",
-      "choices": {
-        "list": "List",
-        "gallery": "Gallery",
-        "file": "File",
-        "event": "Event"
-      },
-      "default_value": "list",
-      "return_format": "value",
-      "layout": "horizontal",
-      "required": 1,
-      "show_in_graphql": 1,
-      "graphql_field_name": "resourceLayout"
-    },
-    {
-      "key": "field_irisid_resource_layout_help_list",
-      "label": "",
-      "name": "",
-      "type": "message",
-      "message": "<p style=\"margin:0;\">News &amp; Media, Press Release, Blog, Iris ID Talk, Case Studies</p>",
-      "new_lines": "",
-      "esc_html": 0,
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "list"
-          }
-        ]
-      ]
-    },
-    {
-      "key": "field_irisid_resource_layout_help_gallery",
-      "label": "",
-      "name": "",
-      "type": "message",
-      "message": "<p style=\"margin:0;\">Videos, Webinars</p>",
-      "new_lines": "",
-      "esc_html": 0,
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "gallery"
-          }
-        ]
-      ]
-    },
-    {
-      "key": "field_irisid_resource_layout_help_file",
-      "label": "",
-      "name": "",
-      "type": "message",
-      "message": "<p style=\"margin:0;\">Data Sheets, Tip Sheets, Use Cases &amp; White Papers</p>",
-      "new_lines": "",
-      "esc_html": 0,
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "file"
-          }
-        ]
-      ]
-    },
-    {
-      "key": "field_irisid_resource_layout_help_event",
-      "label": "",
-      "name": "",
-      "type": "message",
-      "message": "<p style=\"margin:0;\">Events &amp; Exhibition</p>",
-      "new_lines": "",
-      "esc_html": 0,
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "event"
-          }
-        ]
-      ]
-    }
-  ],
+  "title": "Resource Type (unused)",
+  "fields": [],
   "location": [
     [
       {
@@ -103,14 +11,13 @@
       }
     ]
   ],
-  "menu_order": -20,
-  "position": "acf_after_title",
+  "menu_order": 99,
+  "position": "normal",
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
-  "active": true,
-  "modified": 1789267000,
-  "show_in_rest": 1,
-  "show_in_graphql": 1,
-  "graphql_field_name": "resourceLayoutFields"
+  "active": false,
+  "modified": 1789281000,
+  "show_in_rest": 0,
+  "show_in_graphql": 0
 }
