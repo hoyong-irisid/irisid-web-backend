@@ -13,10 +13,27 @@
     },
     {
       "key": "field_irisid_resource_excerpt",
-      "label": "Excerpt",
+      "label": "Description",
       "name": "excerpt",
       "type": "textarea",
       "rows": 3,
+      "instructions": "Short card text shown under the title on Gallery and Event archives.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "gallery"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
       "show_in_graphql": 1,
       "graphql_field_name": "excerpt"
     },
@@ -40,6 +57,13 @@
             "field": "field_irisid_resource_layout",
             "operator": "==",
             "value": "list"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "gallery"
           }
         ]
       ],
@@ -68,6 +92,13 @@
             "operator": "==",
             "value": "list"
           }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "gallery"
+          }
         ]
       ],
       "show_in_graphql": 1,
@@ -80,7 +111,7 @@
       "type": "image",
       "return_format": "array",
       "preview_size": "medium",
-      "instructions": "Thumbnail / hero image for this resource.",
+      "instructions": "Thumbnail for archive cards / hero image for detail.",
       "conditional_logic": [
         [
           {
@@ -122,6 +153,7 @@
       "tabs": "all",
       "toolbar": "full",
       "media_upload": 1,
+      "instructions": "Full article or event detail content.",
       "conditional_logic": [
         [
           {
@@ -143,10 +175,10 @@
     },
     {
       "key": "field_irisid_resource_video",
-      "label": "Video Embed",
+      "label": "Video URL",
       "name": "video_embed",
       "type": "oembed",
-      "instructions": "Paste a YouTube / Vimeo (or other oEmbed) URL.",
+      "instructions": "YouTube / Vimeo (or other oEmbed) URL for Gallery cards and the detail player.",
       "conditional_logic": [
         [
           {
@@ -201,7 +233,7 @@
       "label": "Event start",
       "name": "event_date",
       "type": "date_picker",
-      "instructions": "Event start date (from).",
+      "instructions": "Event start date (from). Shown on Event archive cards.",
       "display_format": "F j, Y",
       "return_format": "Y-m-d",
       "first_day": 0,
@@ -307,7 +339,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789269000,
+  "modified": 1789270000,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"

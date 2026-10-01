@@ -208,8 +208,7 @@ function irisid_resource_admin_column_content(string $column, int $post_id): voi
     echo esc_html($labels[$layout] ?? '–');
 }
 
-/** Excerpt is generated from Body and is not a manual editor field. */
-add_filter('acf/prepare_field/key=field_irisid_resource_excerpt', '__return_false');
+/** Description (excerpt) is edited for Gallery/Event cards; List keeps auto excerpt from Body. */
 /** Keep Related / External out of the day-to-day layout editors (still in GraphQL). */
 add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_false');
@@ -294,14 +293,29 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource:not(.irisid-layout-event)'
         . ' .acf-field[data-key="field_irisid_resource_event_visibility"]{'
         . 'display:none!important;}'
-        . 'body.post-type-resource:not(.irisid-layout-list)'
+        /* Display date: List + Gallery cards */
+        . 'body.post-type-resource:not(.irisid-layout-list):not(.irisid-layout-gallery)'
         . ' .acf-field[data-key="field_irisid_resource_display_date"],'
-        . 'body.post-type-resource:not(.irisid-layout-list)'
+        . 'body.post-type-resource:not(.irisid-layout-list):not(.irisid-layout-gallery)'
         . ' .acf-field[data-key="field_irisid_resource_show_display_date"]{'
         . 'display:none!important;}'
-        . 'body.post-type-resource:not(.irisid-layout-list):not(.irisid-layout-event)'
+        /* Description: Gallery + Event cards */
+        . 'body.post-type-resource:not(.irisid-layout-gallery):not(.irisid-layout-event)'
+        . ' .acf-field[data-key="field_irisid_resource_excerpt"]{'
+        . 'display:none!important;}'
+        /* Body: List + Event only. Force visible so ACF cross-group conditionals cannot drop it. */
+        . 'body.post-type-resource.irisid-layout-gallery'
+        . ' .acf-field[data-key="field_irisid_resource_body"],'
+        . 'body.post-type-resource.irisid-layout-file'
         . ' .acf-field[data-key="field_irisid_resource_body"]{'
         . 'display:none!important;}'
+        . 'body.post-type-resource.irisid-layout-list'
+        . ' .acf-field[data-key="field_irisid_resource_body"],'
+        . 'body.post-type-resource.irisid-layout-event'
+        . ' .acf-field[data-key="field_irisid_resource_body"],'
+        . 'body.post-type-resource:not(.irisid-layout-gallery):not(.irisid-layout-file)'
+        . ' .acf-field[data-key="field_irisid_resource_body"]{'
+        . 'display:block!important;}'
         . '</style>';
     echo '<script id="irisid-resource-align-top">(function(){'
         . 'function layoutFromDom(){'
@@ -362,11 +376,18 @@ function irisid_generate_resource_excerpt($postId): void
         return;
     }
 
-    $body = (string) get_field('body', (int) $postId);
+    $postId = (int) $postId;
+    $layout = (string) get_field('resource_layout', $postId);
+    // Gallery/Event editors enter Description manually for the 4-up cards.
+    if ($layout === 'gallery' || $layout === 'event') {
+        return;
+    }
+
+    $body = (string) get_field('body', $postId);
     $plainText = trim(wp_strip_all_tags(strip_shortcodes($body)));
     $excerpt = $plainText === '' ? '' : wp_trim_words($plainText, 32, '…');
 
-    update_field('field_irisid_resource_excerpt', $excerpt, (int) $postId);
+    update_field('field_irisid_resource_excerpt', $excerpt, $postId);
 }
 
 /** Copy Resource Fields → Title into the WordPress post_title. */
@@ -552,8 +573,11 @@ function irisid_resource_layout_admin_script(string $hook): void
                     sheet.style.display = isFile ? '' : 'none';
                 }
 
-                // List: title/excerpt/display date/image/body only.
-                // Gallery/File/Event own video, file, attachment, and event fields.
+                // Per-type Resource Fields (Title always shown).
+                // List:   date, image, body
+                // Gallery: video URL, thumbnail, date, description  (4-up cards)
+                // File:    thumbnail, file name, attachment + Sheet panel (date, version)
+                // Event:   thumbnail, dates, description, body
                 var LAYOUT_FIELDS = {
                     list: [
                         'field_irisid_resource_display_date',
@@ -562,8 +586,11 @@ function irisid_resource_layout_admin_script(string $hook): void
                         'field_irisid_resource_body'
                     ],
                     gallery: [
+                        'field_irisid_resource_video',
                         'field_irisid_resource_featured',
-                        'field_irisid_resource_video'
+                        'field_irisid_resource_display_date',
+                        'field_irisid_resource_show_display_date',
+                        'field_irisid_resource_excerpt'
                     ],
                     file: [
                         'field_irisid_resource_featured',
@@ -572,10 +599,11 @@ function irisid_resource_layout_admin_script(string $hook): void
                     ],
                     event: [
                         'field_irisid_resource_featured',
-                        'field_irisid_resource_body',
                         'field_irisid_resource_event_date',
                         'field_irisid_resource_event_ends',
-                        'field_irisid_resource_event_visibility'
+                        'field_irisid_resource_event_visibility',
+                        'field_irisid_resource_excerpt',
+                        'field_irisid_resource_body'
                     ]
                 };
                 var ALL_LAYOUT_FIELDS = {};
