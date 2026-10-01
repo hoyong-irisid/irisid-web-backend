@@ -249,6 +249,11 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field.irisid-show-display-date{clear:none;}'
         . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-switch{margin-top:2px;}'
         . 'body.post-type-resource .acf-field.irisid-layout-hidden{display:none!important;}'
+        . 'body.post-type-resource.irisid-layout-list .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="list"]),'
+        . 'body.post-type-resource.irisid-layout-gallery .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="gallery"]),'
+        . 'body.post-type-resource.irisid-layout-file .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="file"]),'
+        . 'body.post-type-resource.irisid-layout-event .acf-field[data-key="field_irisid_resource_kind"] li[data-term-layout]:not([data-term-layout="event"]){'
+        . 'display:none!important;}'
         . '</style>';
     echo '<script id="irisid-resource-align-top">(function(){'
         . 'function align(){'
@@ -351,6 +356,150 @@ function irisid_resource_layout_for_type_slug(string $slug): ?string
     return $map[$slug] ?? null;
 }
 
+/** @return array<string, string> */
+function irisid_resource_layout_choices(): array
+{
+    return [
+        'list'    => 'List',
+        'gallery' => 'Gallery',
+        'file'    => 'File',
+        'event'   => 'Event',
+    ];
+}
+
+function irisid_term_resource_layout(int $termId, string $slug = ''): string
+{
+    $layout = (string) get_term_meta($termId, 'irisid_layout', true);
+    if (isset(irisid_resource_layout_choices()[$layout])) {
+        return $layout;
+    }
+    $mapped = $slug !== '' ? irisid_resource_layout_for_type_slug($slug) : null;
+    return $mapped ?? 'list';
+}
+
+add_action('resource_type_add_form_fields', 'irisid_resource_type_add_layout_field');
+add_action('resource_type_edit_form_fields', 'irisid_resource_type_edit_layout_field', 10, 1);
+add_action('created_resource_type', 'irisid_save_resource_type_layout');
+add_action('edited_resource_type', 'irisid_save_resource_type_layout');
+add_filter('manage_edit-resource_type_columns', 'irisid_resource_type_columns');
+add_filter('manage_resource_type_custom_column', 'irisid_resource_type_column_content', 10, 3);
+add_action('admin_init', 'irisid_seed_resource_type_layouts');
+add_action('admin_head-edit-tags.php', 'irisid_resource_type_admin_styles');
+add_action('admin_head-term.php', 'irisid_resource_type_admin_styles');
+
+function irisid_resource_type_admin_styles(): void
+{
+    $screen = get_current_screen();
+    if (!$screen || $screen->taxonomy !== 'resource_type') {
+        return;
+    }
+    echo '<style id="irisid-resource-type-admin">'
+        . '.taxonomy-resource_type .term-parent-wrap{display:none!important;}'
+        . '.taxonomy-resource_type .irisid-term-layout-radios{display:flex;flex-wrap:wrap;gap:8px 18px;margin:6px 0 0;}'
+        . '.taxonomy-resource_type .irisid-term-layout-radios label{font-weight:600;}'
+        . '.taxonomy-resource_type .column-irisid_layout{width:88px;}'
+        . '</style>';
+}
+
+function irisid_resource_type_add_layout_field(): void
+{
+    echo '<div class="form-field term-layout-wrap">'
+        . '<label>Type</label>';
+    irisid_resource_type_layout_radios('list');
+    echo '<p>Public page layout. Resources with this Type will list this category.</p>'
+        . '</div>';
+}
+
+function irisid_resource_type_edit_layout_field($term): void
+{
+    $termId = (int) ($term->term_id ?? 0);
+    $slug = (string) ($term->slug ?? '');
+    $layout = $termId ? irisid_term_resource_layout($termId, $slug) : 'list';
+    echo '<tr class="form-field term-layout-wrap">'
+        . '<th scope="row"><label for="irisid_layout">Type</label></th>'
+        . '<td>';
+    irisid_resource_type_layout_radios($layout);
+    echo '<p class="description">Public page layout. Resources with this Type will list this category.</p>'
+        . '</td></tr>';
+}
+
+function irisid_resource_type_layout_radios(string $current): void
+{
+    echo '<div class="irisid-term-layout-radios">';
+    foreach (irisid_resource_layout_choices() as $value => $label) {
+        printf(
+            '<label><input type="radio" name="irisid_layout" value="%s"%s> %s</label>',
+            esc_attr($value),
+            checked($current, $value, false),
+            esc_html($label)
+        );
+    }
+    echo '</div>';
+}
+
+function irisid_save_resource_type_layout($termId): void
+{
+    $termId = (int) $termId;
+    if ($termId <= 0 || !current_user_can('manage_categories')) {
+        return;
+    }
+    $layout = isset($_POST['irisid_layout']) ? sanitize_key((string) $_POST['irisid_layout']) : 'list';
+    if (!isset(irisid_resource_layout_choices()[$layout])) {
+        $layout = 'list';
+    }
+    update_term_meta($termId, 'irisid_layout', $layout);
+}
+
+/**
+ * @param array<string, string> $columns
+ * @return array<string, string>
+ */
+function irisid_resource_type_columns(array $columns): array
+{
+    unset($columns['description']);
+    $with_type = [];
+    foreach ($columns as $key => $label) {
+        $with_type[$key] = $label;
+        if ($key === 'name') {
+            $with_type['irisid_layout'] = 'Type';
+        }
+    }
+    if (!isset($with_type['irisid_layout'])) {
+        $with_type['irisid_layout'] = 'Type';
+    }
+    return $with_type;
+}
+
+function irisid_resource_type_column_content(string $content, string $column, int $termId): string
+{
+    if ($column !== 'irisid_layout') {
+        return $content;
+    }
+    $term = get_term($termId, 'resource_type');
+    $slug = ($term && !is_wp_error($term)) ? (string) $term->slug : '';
+    $layout = irisid_term_resource_layout($termId, $slug);
+    return esc_html(irisid_resource_layout_choices()[$layout] ?? 'List');
+}
+
+function irisid_seed_resource_type_layouts(): void
+{
+    $terms = get_terms([
+        'taxonomy'   => 'resource_type',
+        'hide_empty' => false,
+    ]);
+    if (is_wp_error($terms)) {
+        return;
+    }
+    foreach ($terms as $term) {
+        $existing = (string) get_term_meta((int) $term->term_id, 'irisid_layout', true);
+        if (isset(irisid_resource_layout_choices()[$existing])) {
+            continue;
+        }
+        $layout = irisid_resource_layout_for_type_slug((string) $term->slug) ?? 'list';
+        update_term_meta((int) $term->term_id, 'irisid_layout', $layout);
+    }
+}
+
 /** Admin: sync layout from taxonomy checkboxes + show File/Sheet panel only for File. */
 add_action('admin_enqueue_scripts', 'irisid_resource_layout_admin_script');
 
@@ -364,26 +513,21 @@ function irisid_resource_layout_admin_script(string $hook): void
         return;
     }
 
-    $layoutToSlugs = [
-        'list'    => ['news-media', 'press-release', 'insights', 'iris-id-talk', 'case-studies'],
-        'gallery' => ['videos', 'webinars'],
-        'file'    => ['data-sheets', 'tip-sheets', 'literature'],
-        'event'   => ['events'],
-    ];
-
-    $termIdToSlug = [];
+    $termIdToLayout = [];
     $terms = get_terms([
         'taxonomy'   => 'resource_type',
         'hide_empty' => false,
     ]);
     if (!is_wp_error($terms)) {
         foreach ($terms as $term) {
-            $termIdToSlug[(string) $term->term_id] = $term->slug;
+            $termIdToLayout[(string) $term->term_id] = irisid_term_resource_layout(
+                (int) $term->term_id,
+                (string) $term->slug
+            );
         }
     }
 
-    $layoutJson = wp_json_encode($layoutToSlugs);
-    $termJson = wp_json_encode($termIdToSlug);
+    $termLayoutJson = wp_json_encode($termIdToLayout);
 
     // Must run after ACF – jquery-core alone fires before `acf` exists.
     wp_enqueue_script('acf-input');
@@ -391,8 +535,7 @@ function irisid_resource_layout_admin_script(string $hook): void
         'acf-input',
         <<<JS
         (function () {
-            var LAYOUT_TO_SLUGS = {$layoutJson};
-            var TERM_ID_TO_SLUG = {$termJson};
+            var TERM_ID_TO_LAYOUT = {$termLayoutJson};
             var ALWAYS = [
                 'field_irisid_resource_layout',
                 'field_irisid_resource_kind',
@@ -488,18 +631,27 @@ function irisid_resource_layout_admin_script(string $hook): void
                     sheet.style.display = isFile ? '' : 'none';
                 }
 
+                function applyBodyLayoutClass(layout) {
+                    ['list', 'gallery', 'file', 'event'].forEach(function (l) {
+                        document.body.classList.toggle('irisid-layout-' + l, l === layout);
+                    });
+                }
+
                 function filterCategories() {
-                    var allowed = LAYOUT_TO_SLUGS[currentLayout()] || [];
-                    var wrap = fieldEl('field_irisid_resource_kind');
+                    var layout = currentLayout();
+                    var wrap = fieldEl('field_irisid_resource_kind') ||
+                        document.querySelector('.acf-field[data-name="resource_kind"]');
                     if (!wrap) return;
-                    wrap.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(function (input) {
-                        var slug = TERM_ID_TO_SLUG[String(input.value)] || '';
-                        var ok = allowed.indexOf(slug) !== -1;
-                        var li = input.closest('li');
-                        if (li) li.style.display = ok ? '' : 'none';
+                    wrap.querySelectorAll('li').forEach(function (li) {
+                        var input = li.querySelector('input');
+                        if (!input) return;
+                        var termLayout = TERM_ID_TO_LAYOUT[String(input.value)] || 'list';
+                        li.setAttribute('data-term-layout', termLayout);
+                        var ok = termLayout === layout;
+                        li.style.display = ok ? '' : 'none';
+                        li.hidden = !ok;
                         if (!ok && input.checked) {
                             input.checked = false;
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     });
                 }
@@ -538,18 +690,25 @@ function irisid_resource_layout_admin_script(string $hook): void
                             if (field && field.hide) field.hide();
                         }
                     });
+                    applyBodyLayoutClass(layout);
                     reorderFields(layout);
                     filterCategories();
                     syncSheetPanel();
                 }
 
+                document.addEventListener('change', function (e) {
+                    var t = e.target;
+                    if (!t || !t.closest) return;
+                    if (t.closest('.acf-field[data-key="field_irisid_resource_layout"]')) {
+                        window.setTimeout(syncResourceFields, 0);
+                    }
+                });
                 layoutField.on('change', function () {
                     window.setTimeout(syncResourceFields, 0);
                 });
-                layoutField.\$el.on('click', 'input[type="radio"], label', function () {
-                    window.setTimeout(syncResourceFields, 0);
-                });
                 syncResourceFields();
+                window.setTimeout(syncResourceFields, 200);
+                window.setTimeout(syncResourceFields, 800);
             }
 
             start();

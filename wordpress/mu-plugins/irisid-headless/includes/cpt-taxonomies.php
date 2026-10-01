@@ -40,9 +40,12 @@ function irisid_register_taxonomies(): void
 
     register_taxonomy('resource_type', ['resource'], array_merge($common, [
         'labels'              => irisid_tax_labels('Resource Type', 'Resource Types'),
-        'rewrite'             => ['slug' => 'resources', 'with_front' => false, 'hierarchical' => true],
+        // Flat list: Type (List/Gallery/File/Event) is term meta, not a parent term.
+        'hierarchical'        => false,
+        'rewrite'             => ['slug' => 'resources', 'with_front' => false],
         'graphql_single_name' => 'resourceType',
         'graphql_plural_name' => 'resourceTypes',
+        'meta_box_cb'         => false,
     ]));
 
     register_taxonomy('download_type', ['download'], array_merge($common, [
