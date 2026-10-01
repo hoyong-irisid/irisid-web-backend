@@ -3,19 +3,6 @@
   "title": "Resource Fields",
   "fields": [
     {
-      "key": "field_irisid_resource_is_featured",
-      "label": "Featured",
-      "name": "is_featured",
-      "type": "true_false",
-      "instructions": "Pin this resource in the Featured row at the top of its Resources archive (up to 4).",
-      "ui": 1,
-      "ui_on_text": "Featured",
-      "ui_off_text": "",
-      "default_value": 0,
-      "show_in_graphql": 1,
-      "graphql_field_name": "isFeatured"
-    },
-    {
       "key": "field_irisid_resource_excerpt",
       "label": "Excerpt",
       "name": "excerpt",
@@ -32,15 +19,6 @@
       "return_format": "array",
       "show_in_graphql": 1,
       "graphql_field_name": "featuredImage"
-    },
-    {
-      "key": "field_irisid_resource_version",
-      "label": "Version",
-      "name": "version",
-      "type": "text",
-      "instructions": "Optional. Shown under the title on Featured archive cards (e.g. Version 2.1).",
-      "show_in_graphql": 1,
-      "graphql_field_name": "version"
     },
     {
       "key": "field_irisid_resource_body",
