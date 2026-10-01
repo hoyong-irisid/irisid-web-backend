@@ -53,7 +53,7 @@
       "label": "CTA URL",
       "name": "cta_url",
       "type": "text",
-      "instructions": "Internal path (e.g. /solutions/access-control/) or full URL (https://…).",
+      "instructions": "Internal path (e.g. /solutions/access-control/) or full URL (https://\u2026).",
       "placeholder": "/solutions/access-control/",
       "conditional_logic": [
         [
@@ -121,7 +121,7 @@
       "label": "Text color",
       "name": "text_color",
       "type": "color_picker",
-      "instructions": "Optional – leave empty to automatically pick a readable color (black or white) based on the background above.",
+      "instructions": "Optional \u2013 leave empty to automatically pick a readable color (black or white) based on the background above.",
       "enable_opacity": 0,
       "return_format": "string",
       "show_in_graphql": 1,
@@ -180,7 +180,7 @@
       "label": "Exposure period",
       "name": "",
       "type": "message",
-      "message": "<p style=\"margin:0 0 8px;\"><strong>Quick select</strong> (buttons appear below once the form loads): Always · Today only · 7 days · 30 days.</p><p style=\"margin:0;color:#646970;\">Start date begins at 00:00 ET. End date ends at 23:59 ET. Leave both empty for always-on while published. When multiple notices overlap on a page, the site rotates them every 5 seconds with a fade.</p>"
+      "message": "<p style=\"margin:0;\">Start date begins at 00:00 ET. End date ends at 23:59 ET. Leave both empty for always-on while published. When multiple notices overlap on a page, the site rotates them every 5 seconds with a fade.</p>"
     },
     {
       "key": "field_irisid_notice_starts_at",
@@ -211,7 +211,7 @@
       "label": "Hide days after closing",
       "name": "dismiss_days",
       "type": "number",
-      "instructions": "If a visitor closes the notice, it stays hidden for this many days (1–365, default 7). Saving the notice again (title/body/schedule change) resets dismiss and shows it again.",
+      "instructions": "If a visitor closes the notice, it stays hidden for this many days (1\u2013365, default 7). Saving the notice again (title/body/schedule change) resets dismiss and shows it again.",
       "default_value": 7,
       "min": 1,
       "max": 365,
@@ -236,7 +236,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789260000,
+  "modified": 1789260001,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "siteNoticeFields"

@@ -179,13 +179,20 @@ function irisid_site_notice_schedule_presets_js(): string
             if (document.getElementById('irisid-notice-preset-styles')) return;
             var style = document.createElement('style');
             style.id = 'irisid-notice-preset-styles';
+            // Keep presets inside an ACF .acf-field so Schedule-tab hide/show
+            // applies, and inherit the same horizontal padding as other fields.
             style.textContent =
-                '.irisid-notice-presets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;}' +
-                '.irisid-notice-presets button{appearance:none;border:1px solid #c3c4c7;background:#f6f7f7;' +
+                '.acf-field[data-key="field_irisid_notice_schedule_presets"] .irisid-notice-presets{' +
+                'display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;}' +
+                '.acf-field[data-key="field_irisid_notice_schedule_presets"] .irisid-notice-presets button{' +
+                'appearance:none;border:1px solid #c3c4c7;background:#f6f7f7;' +
                 'color:#1d2327;border-radius:3px;padding:4px 10px;font-size:12px;cursor:pointer;line-height:1.4;}' +
-                '.irisid-notice-presets button:hover{background:#fff;border-color:#8c8f94;}' +
-                '.irisid-notice-presets button.is-active{background:#2271b1;border-color:#2271b1;color:#fff;}' +
-                '.irisid-notice-period-hint{margin:8px 0 0;padding:8px 10px;background:#f0f0f1;border-radius:3px;' +
+                '.acf-field[data-key="field_irisid_notice_schedule_presets"] .irisid-notice-presets button:hover{' +
+                'background:#fff;border-color:#8c8f94;}' +
+                '.acf-field[data-key="field_irisid_notice_schedule_presets"] .irisid-notice-presets button.is-active{' +
+                'background:#2271b1;border-color:#2271b1;color:#fff;}' +
+                '.acf-field[data-key="field_irisid_notice_schedule_presets"] .irisid-notice-period-hint{' +
+                'margin:10px 0 0;padding:8px 10px;background:#f0f0f1;border-radius:3px;' +
                 'font-size:12px;color:#50575e;}';
             document.head.appendChild(style);
         }
@@ -205,6 +212,14 @@ function irisid_site_notice_schedule_presets_js(): string
                 var endsField = acf.getField('field_irisid_notice_ends_at');
                 if (!startsField || !endsField) return;
                 if (document.getElementById('irisid-notice-presets')) return;
+
+                // Mount inside the Schedule-tab "Exposure period" message field so
+                // ACF's tab show/hide owns visibility (siblings of .acf-field stay
+                // visible on Content / Appearance).
+                var host = document.querySelector(
+                    '.acf-field[data-key="field_irisid_notice_schedule_presets"] .acf-input'
+                );
+                if (!host) return;
 
                 injectStyles();
 
@@ -259,10 +274,8 @@ function irisid_site_notice_schedule_presets_js(): string
                     wrap.appendChild(btn);
                 });
 
-                var startsEl = startsField.$el && startsField.$el[0];
-                if (!startsEl || !startsEl.parentNode) return;
-                startsEl.parentNode.insertBefore(wrap, startsEl);
-                startsEl.parentNode.insertBefore(hint, startsEl.nextSibling);
+                host.appendChild(wrap);
+                host.appendChild(hint);
 
                 startsField.on('change', refreshHint);
                 endsField.on('change', refreshHint);
