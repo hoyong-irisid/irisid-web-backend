@@ -145,6 +145,11 @@ function irisid_simplify_resource_editor_supports(): void
 
 /** Excerpt is generated from Body and is not a manual editor field. */
 add_filter('acf/prepare_field/key=field_irisid_resource_excerpt', '__return_false');
+/** Keep Related / External out of the day-to-day layout editors (still in GraphQL). */
+add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_false');
+add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_false');
+add_filter('acf/prepare_field/key=field_irisid_resource_solutions', '__return_false');
+
 add_action('acf/save_post', 'irisid_generate_resource_excerpt', 20);
 
 function irisid_generate_resource_excerpt($postId): void
@@ -158,4 +163,188 @@ function irisid_generate_resource_excerpt($postId): void
     $excerpt = $plainText === '' ? '' : wp_trim_words($plainText, 32, '…');
 
     update_field('field_irisid_resource_excerpt', $excerpt, (int) $postId);
+}
+
+/**
+ * Map sidebar Resource Type taxonomy → List / Gallery / File / Event layout.
+ * Editors can still override the layout manually.
+ */
+function irisid_resource_layout_for_type_slug(string $slug): ?string
+{
+    $map = [
+        'news-media'    => 'list',
+        'press-release' => 'list',
+        'insights'      => 'list',
+        'iris-id-talk'  => 'list',
+        'case-studies'  => 'list',
+        'videos'        => 'gallery',
+        'webinars'      => 'gallery',
+        'data-sheets'   => 'file',
+        'tip-sheets'    => 'file',
+        'literature'    => 'file',
+        'events'        => 'event',
+    ];
+    return $map[$slug] ?? null;
+}
+
+/** Admin: sync layout from taxonomy checkboxes + show File/Sheet panel only for File. */
+add_action('admin_enqueue_scripts', 'irisid_resource_layout_admin_script');
+
+function irisid_resource_layout_admin_script(string $hook): void
+{
+    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== 'resource') {
+        return;
+    }
+
+    $typeToLayout = [
+        'news-media'    => 'list',
+        'press-release' => 'list',
+        'insights'      => 'list',
+        'iris-id-talk'  => 'list',
+        'case-studies'  => 'list',
+        'videos'        => 'gallery',
+        'webinars'      => 'gallery',
+        'data-sheets'   => 'file',
+        'tip-sheets'    => 'file',
+        'literature'    => 'file',
+        'events'        => 'event',
+    ];
+
+    $termIdToSlug = [];
+    $terms = get_terms([
+        'taxonomy'   => 'resource_type',
+        'hide_empty' => false,
+    ]);
+    if (!is_wp_error($terms)) {
+        foreach ($terms as $term) {
+            $termIdToSlug[(string) $term->term_id] = $term->slug;
+        }
+    }
+
+    $typeJson = wp_json_encode($typeToLayout);
+    $termJson = wp_json_encode($termIdToSlug);
+
+    wp_add_inline_script(
+        'jquery-core',
+        <<<JS
+        (function () {
+            var TYPE_TO_LAYOUT = {$typeJson};
+            var TERM_ID_TO_SLUG = {$termJson};
+
+            function boot() {
+                if (typeof acf === 'undefined') return;
+                acf.addAction('ready', function () {
+                    var layoutField = acf.getField('field_irisid_resource_layout');
+                    if (!layoutField) return;
+
+                    function currentLayout() {
+                        return String(layoutField.val() || 'list');
+                    }
+
+                    function syncSheetPanel() {
+                        var isFile = currentLayout() === 'file';
+                        var sheet =
+                            document.getElementById('acf-group_irisid_resource_sheet') ||
+                            document.querySelector('.postbox[id*="group_irisid_resource_sheet"]');
+                        if (!sheet) return;
+                        sheet.style.display = isFile ? '' : 'none';
+                    }
+
+                    function layoutFromCheckedTypes() {
+                        var layouts = [];
+                        var inputs = document.querySelectorAll(
+                            '#resource_typediv input[type="checkbox"], #taxonomy-resource_type input[type="checkbox"]'
+                        );
+                        inputs.forEach(function (input) {
+                            if (!input.checked) return;
+                            var slug = TERM_ID_TO_SLUG[String(input.value)] || '';
+                            if (slug && TYPE_TO_LAYOUT[slug]) {
+                                layouts.push(TYPE_TO_LAYOUT[slug]);
+                            }
+                        });
+                        if (!layouts.length) return null;
+                        if (layouts.indexOf('event') !== -1) return 'event';
+                        if (layouts.indexOf('file') !== -1) return 'file';
+                        if (layouts.indexOf('gallery') !== -1) return 'gallery';
+                        return 'list';
+                    }
+
+                    var manualOverride = false;
+                    layoutField.$el.on('click', 'input, button, .acf-button-group label', function () {
+                        manualOverride = true;
+                    });
+
+                    function maybeApplyFromTaxonomy() {
+                        if (!manualOverride) {
+                            var next = layoutFromCheckedTypes();
+                            if (next && next !== currentLayout()) {
+                                layoutField.val(next);
+                            }
+                        }
+                        syncSheetPanel();
+                    }
+
+                    layoutField.on('change', syncSheetPanel);
+                    document.addEventListener('change', function (e) {
+                        var t = e.target;
+                        if (!t || !t.closest) return;
+                        if (t.closest('#resource_typediv') || t.closest('#taxonomy-resource_type')) {
+                            maybeApplyFromTaxonomy();
+                        }
+                    });
+
+                    maybeApplyFromTaxonomy();
+                    syncSheetPanel();
+                });
+            }
+
+            if (window.acf) boot();
+            else document.addEventListener('DOMContentLoaded', boot);
+        })();
+        JS,
+        'after'
+    );
+}
+
+/**
+ * Backfill resource_layout from taxonomy for posts that do not have it yet.
+ * Runs once per edit-screen load (cheap) and on save.
+ */
+add_action('acf/save_post', 'irisid_ensure_resource_layout_on_save', 5);
+
+function irisid_ensure_resource_layout_on_save($postId): void
+{
+    if (!is_numeric($postId) || get_post_type((int) $postId) !== 'resource') {
+        return;
+    }
+    $postId = (int) $postId;
+    $existing = get_field('resource_layout', $postId);
+    if (is_string($existing) && $existing !== '') {
+        return;
+    }
+    $terms = wp_get_post_terms($postId, 'resource_type', ['fields' => 'slugs']);
+    if (is_wp_error($terms) || !$terms) {
+        update_field('field_irisid_resource_layout', 'list', $postId);
+        return;
+    }
+    $layout = 'list';
+    foreach ($terms as $slug) {
+        $mapped = irisid_resource_layout_for_type_slug((string) $slug);
+        if ($mapped === 'event') {
+            $layout = 'event';
+            break;
+        }
+        if ($mapped === 'file') {
+            $layout = 'file';
+        } elseif ($mapped === 'gallery' && $layout !== 'file') {
+            $layout = 'gallery';
+        } elseif ($mapped === 'list' && $layout === 'list') {
+            $layout = 'list';
+        }
+    }
+    update_field('field_irisid_resource_layout', $layout, $postId);
 }

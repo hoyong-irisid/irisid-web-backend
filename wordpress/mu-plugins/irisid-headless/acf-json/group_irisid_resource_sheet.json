@@ -1,13 +1,13 @@
 {
   "key": "group_irisid_resource_sheet",
-  "title": "Data / Tip Sheet Fields",
+  "title": "File / Sheet Details",
   "fields": [
     {
       "key": "field_irisid_sheet_version",
-      "label": "Version",
+      "label": "Version info",
       "name": "version",
       "type": "text",
-      "instructions": "Display string, e.g. Version 2.1 or Rev. 2024-06",
+      "instructions": "Optional. e.g. Version 2.1 or Rev. 2024-06",
       "show_in_graphql": 1,
       "graphql_field_name": "version"
     },
@@ -23,10 +23,10 @@
     },
     {
       "key": "field_irisid_sheet_section",
-      "label": "Section",
+      "label": "Section title",
       "name": "section",
       "type": "select",
-      "instructions": "Grouping on the Data Sheets archive (leave empty for Tip Sheets).",
+      "instructions": "Optional grouping on Data Sheets archives (leave empty for Tip Sheets / other files).",
       "choices": {
         "Hardware Products": "Hardware Products",
         "Software Products": "Software Products"
@@ -38,18 +38,18 @@
     },
     {
       "key": "field_irisid_sheet_language_files",
-      "label": "Language Files",
+      "label": "Language files / attachment",
       "name": "language_files",
       "type": "repeater",
       "layout": "block",
-      "button_label": "Add Language File",
-      "instructions": "One row per language PDF (or downloadable file).",
+      "button_label": "Add language file",
+      "instructions": "One row per language PDF (or downloadable file). Language tag is optional for a single generic download.",
       "show_in_graphql": 1,
       "graphql_field_name": "languageFiles",
       "sub_fields": [
         {
           "key": "field_irisid_sheet_lang",
-          "label": "Language",
+          "label": "Language tag",
           "name": "language",
           "type": "select",
           "choices": {
@@ -67,7 +67,8 @@
             "DOWNLOAD": "Download (generic)"
           },
           "default_value": "English",
-          "required": 1,
+          "required": 0,
+          "allow_null": 1,
           "show_in_graphql": 1,
           "graphql_field_name": "language"
         },
@@ -102,23 +103,6 @@
         "param": "post_type",
         "operator": "==",
         "value": "resource"
-      },
-      {
-        "param": "post_taxonomy",
-        "operator": "==",
-        "value": "resource_type:data-sheets"
-      }
-    ],
-    [
-      {
-        "param": "post_type",
-        "operator": "==",
-        "value": "resource"
-      },
-      {
-        "param": "post_taxonomy",
-        "operator": "==",
-        "value": "resource_type:tip-sheets"
       }
     ]
   ],
@@ -128,6 +112,8 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
+  "modified": 1789261000,
+  "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "sheetFields"
 }

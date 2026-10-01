@@ -12,11 +12,64 @@
       "graphql_field_name": "excerpt"
     },
     {
+      "key": "field_irisid_resource_display_date",
+      "label": "Display date",
+      "name": "display_date",
+      "type": "date_picker",
+      "instructions": "Optional. Shown on list cards instead of the publish date when set.",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "first_day": 0,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "displayDate"
+    },
+    {
       "key": "field_irisid_resource_featured",
       "label": "Featured Image",
       "name": "featured_image",
       "type": "image",
       "return_format": "array",
+      "preview_size": "medium",
+      "instructions": "Thumbnail / hero image for this resource.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "gallery"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
       "show_in_graphql": 1,
       "graphql_field_name": "featuredImage"
     },
@@ -25,8 +78,156 @@
       "label": "Body",
       "name": "body",
       "type": "wysiwyg",
+      "tabs": "all",
+      "toolbar": "full",
+      "media_upload": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
       "show_in_graphql": 1,
       "graphql_field_name": "body"
+    },
+    {
+      "key": "field_irisid_resource_video",
+      "label": "Video Embed",
+      "name": "video_embed",
+      "type": "oembed",
+      "instructions": "Paste a YouTube / Vimeo (or other oEmbed) URL.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "gallery"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "videoEmbed"
+    },
+    {
+      "key": "field_irisid_resource_file_name",
+      "label": "File name",
+      "name": "file_name",
+      "type": "text",
+      "instructions": "Optional display name for the download. Leave empty to use the post title.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "fileName"
+    },
+    {
+      "key": "field_irisid_resource_attachment",
+      "label": "Attachment",
+      "name": "attachment",
+      "type": "file",
+      "return_format": "array",
+      "instructions": "File to download (PDF or other). For multi-language Data/Tip Sheets, prefer Language Files in the sheet panel below.",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "attachment"
+    },
+    {
+      "key": "field_irisid_resource_event_date",
+      "label": "Event start",
+      "name": "event_date",
+      "type": "date_picker",
+      "instructions": "Event start date (from).",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "first_day": 0,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "eventDate"
+    },
+    {
+      "key": "field_irisid_resource_event_ends",
+      "label": "Event end",
+      "name": "event_ends_at",
+      "type": "date_picker",
+      "instructions": "Event end date (to). Optional – leave empty for a single-day event.",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "first_day": 0,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "eventEndsAt"
+    },
+    {
+      "key": "field_irisid_resource_event_visibility",
+      "label": "Show / hide",
+      "name": "event_visibility",
+      "type": "button_group",
+      "instructions": "Always: show while published. Scheduled: only show between Event start and Event end.",
+      "choices": {
+        "always": "Always",
+        "scheduled": "Scheduled"
+      },
+      "default_value": "always",
+      "return_format": "value",
+      "layout": "horizontal",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "event"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "eventVisibility"
     },
     {
       "key": "field_irisid_resource_external",
@@ -35,33 +236,6 @@
       "type": "url",
       "show_in_graphql": 1,
       "graphql_field_name": "externalUrl"
-    },
-    {
-      "key": "field_irisid_resource_video",
-      "label": "Video Embed",
-      "name": "video_embed",
-      "type": "oembed",
-      "show_in_graphql": 1,
-      "graphql_field_name": "videoEmbed"
-    },
-    {
-      "key": "field_irisid_resource_attachment",
-      "label": "Attachment (PDF)",
-      "name": "attachment",
-      "type": "file",
-      "return_format": "array",
-      "show_in_graphql": 1,
-      "graphql_field_name": "attachment"
-    },
-    {
-      "key": "field_irisid_resource_event_date",
-      "label": "Event Date",
-      "name": "event_date",
-      "type": "date_picker",
-      "display_format": "F j, Y",
-      "return_format": "Y-m-d",
-      "show_in_graphql": 1,
-      "graphql_field_name": "eventDate"
     },
     {
       "key": "field_irisid_resource_products",
@@ -93,7 +267,14 @@
       }
     ]
   ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
   "active": true,
+  "modified": 1789261000,
+  "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"
 }

@@ -1,0 +1,44 @@
+{
+  "key": "group_irisid_resource_layout",
+  "title": "Resource Type",
+  "fields": [
+    {
+      "key": "field_irisid_resource_layout",
+      "label": "Type",
+      "name": "resource_layout",
+      "type": "button_group",
+      "instructions": "Controls which fields appear in Resource Fields below. Sidebar Resource Types still decide which site section this post belongs to (News & Media, Videos, Data Sheets, …).",
+      "choices": {
+        "list": "List",
+        "gallery": "Gallery",
+        "file": "File",
+        "event": "Event"
+      },
+      "default_value": "list",
+      "return_format": "value",
+      "layout": "horizontal",
+      "required": 1,
+      "show_in_graphql": 1,
+      "graphql_field_name": "resourceLayout"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "resource"
+      }
+    ]
+  ],
+  "menu_order": -10,
+  "position": "acf_after_title",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "active": true,
+  "modified": 1789261000,
+  "show_in_rest": 1,
+  "show_in_graphql": 1,
+  "graphql_field_name": "resourceLayoutFields"
+}
