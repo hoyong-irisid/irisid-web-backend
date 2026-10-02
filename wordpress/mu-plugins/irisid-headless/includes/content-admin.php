@@ -360,6 +360,10 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field li{'
         . 'margin:0!important;padding:0!important;float:none!important;width:auto!important;'
         . 'min-width:0;border:0!important;}'
+        /* ACF inserts a hidden empty value <li> – keep it out of the grid. */
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:has(> input[type="hidden"]),'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:not(:has(input[type="checkbox"])){'
+        . 'display:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field label{'
         . 'display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;font-weight:400;'
         . 'white-space:normal;border:0!important;}'
@@ -1266,25 +1270,34 @@ function irisid_resource_layout_admin_script(string $hook): void
                     if (!wrap) return;
                     var list = wrap.querySelector('ul.acf-checkbox-list, ul.acf-radio-list, ul');
                     var items = Array.prototype.slice.call(wrap.querySelectorAll('li'));
-                    if (list && items.length && TERM_ORDER && TERM_ORDER.length) {
+                    if (list && items.length) {
                         var byId = {};
                         items.forEach(function (li) {
-                            var input = li.querySelector('input[type="checkbox"], input[type="radio"]');
-                            if (!input) return;
-                            byId[String(input.value)] = li;
+                            var checkbox = li.querySelector('input[type="checkbox"]');
+                            if (!checkbox) {
+                                /* Hidden ACF empty-value row – keep out of the 4-col grid. */
+                                li.style.display = 'none';
+                                li.hidden = true;
+                                return;
+                            }
+                            byId[String(checkbox.value)] = li;
+                            li.style.display = '';
+                            li.hidden = false;
                         });
-                        TERM_ORDER.forEach(function (id) {
-                            var li = byId[String(id)];
-                            if (li) list.appendChild(li);
-                        });
-                        items.forEach(function (li) {
-                            if (li.parentNode === list) list.appendChild(li);
-                        });
+                        if (TERM_ORDER && TERM_ORDER.length) {
+                            var seen = {};
+                            TERM_ORDER.forEach(function (id) {
+                                var li = byId[String(id)];
+                                if (li) {
+                                    list.appendChild(li);
+                                    seen[String(id)] = true;
+                                }
+                            });
+                            Object.keys(byId).forEach(function (id) {
+                                if (!seen[id]) list.appendChild(byId[id]);
+                            });
+                        }
                     }
-                    wrap.querySelectorAll('li').forEach(function (li) {
-                        li.style.display = '';
-                        li.hidden = false;
-                    });
                 }
 
                 function reorderFields(layout) {
