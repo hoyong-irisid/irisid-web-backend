@@ -331,6 +331,9 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field.irisid-display-date,'
         . 'body.post-type-resource .acf-field.irisid-show-display-date{clear:none;}'
         . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-switch{margin-top:2px;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] li.irisid-category-junk{'
+        . 'display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;'
+        . 'margin:0!important;padding:0!important;border:0!important;}'
         . 'body.post-type-resource .acf-field.irisid-layout-hidden{display:none!important;}'
         . 'body.post-type-resource .acf-field.irisid-layout-visible{display:block!important;}'
         /* Category box – 4-column grid, even inset on every row. */
@@ -355,6 +358,16 @@ function irisid_resource_hide_native_title(): void
         . 'gap:10px 16px;margin:0!important;padding:0!important;list-style:none!important;'
         . 'border:0!important;outline:0!important;background:transparent!important;'
         . 'box-shadow:none!important;}'
+        /* ACF .acf-bl clearfix ::before/::after become grid items and steal the top-left cell. */
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list::before,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list::after,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-radio-list::before,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-radio-list::after,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-bl::before,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-bl::after,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-hl::before,'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-hl::after{'
+        . 'content:none!important;display:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list li,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-radio-list li,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field li{'
@@ -741,7 +754,20 @@ function irisid_save_resource_type_order(array $termIds): void
 
 /** Keep ACF Category checkboxes in the same order as the Resource Type screen. */
 add_filter('acf/fields/taxonomy/query/key=field_irisid_resource_kind', 'irisid_acf_resource_kind_order', 10, 1);
-add_filter('acf/fields/taxonomy/wp_list_categories/key=field_irisid_resource_kind', 'irisid_acf_resource_kind_wp_list', 10, 1);
+add_filter('acf/fields/taxonomy/wp_list_categories', 'irisid_acf_resource_kind_wp_list_all', 10, 2);
+
+/**
+ * @param array<string, mixed> $args
+ * @param array<string, mixed> $field
+ * @return array<string, mixed>
+ */
+function irisid_acf_resource_kind_wp_list_all(array $args, $field): array
+{
+    if (!is_array($field) || ($field['key'] ?? '') !== 'field_irisid_resource_kind') {
+        return $args;
+    }
+    return irisid_acf_resource_kind_wp_list($args);
+}
 
 /**
  * @param array<string, mixed> $args
@@ -772,7 +798,9 @@ function irisid_acf_resource_kind_order(array $args): array
  */
 function irisid_acf_resource_kind_wp_list(array $args): array
 {
-    $args['show_option_none'] = '';
+    $args['show_option_none'] = false;
+    $args['option_none_value'] = '';
+    $args['hierarchical'] = false;
     $ordered = irisid_get_resource_type_terms();
     $ids = [];
     foreach ($ordered as $term) {
@@ -1290,41 +1318,53 @@ function irisid_resource_layout_admin_script(string $hook): void
                     });
                 }
 
+                function isRealCategoryRow(li) {
+                    var checkbox = li.querySelector('input[type="checkbox"]');
+                    if (!checkbox) return false;
+                    var id = parseInt(String(checkbox.value), 10);
+                    return !isNaN(id) && id > 0;
+                }
+
                 function showAllCategories() {
                     var wrap = fieldEl('field_irisid_resource_kind') ||
                         document.querySelector('.acf-field[data-name="resource_kind"]');
                     if (!wrap) return;
                     var list = wrap.querySelector('ul.acf-checkbox-list, ul.acf-radio-list, ul');
-                    var items = Array.prototype.slice.call(wrap.querySelectorAll('li'));
-                    if (list && items.length) {
-                        var byId = {};
-                        items.forEach(function (li) {
-                            var checkbox = li.querySelector('input[type="checkbox"]');
-                            var value = checkbox ? String(checkbox.value) : '';
-                            if (!checkbox || value === '' || value === '0') {
-                                /* ACF "No …" / empty-value row – keep out of the 4-col grid. */
-                                li.style.display = 'none';
-                                li.hidden = true;
-                                return;
-                            }
-                            byId[value] = li;
-                            li.style.display = '';
-                            li.hidden = false;
-                        });
-                        if (TERM_ORDER && TERM_ORDER.length) {
-                            var seen = {};
-                            TERM_ORDER.forEach(function (id) {
-                                var li = byId[String(id)];
-                                if (li) {
-                                    list.appendChild(li);
-                                    seen[String(id)] = true;
-                                }
-                            });
-                            Object.keys(byId).forEach(function (id) {
-                                if (!seen[id]) list.appendChild(byId[id]);
-                            });
+                    if (!list) return;
+                    var items = Array.prototype.slice.call(list.querySelectorAll(':scope > li'));
+                    var byId = {};
+                    var junk = [];
+                    items.forEach(function (li) {
+                        if (!isRealCategoryRow(li)) {
+                            li.classList.add('irisid-category-junk');
+                            li.style.display = 'none';
+                            li.hidden = true;
+                            junk.push(li);
+                            return;
                         }
+                        li.classList.remove('irisid-category-junk');
+                        li.style.display = '';
+                        li.hidden = false;
+                        var checkbox = li.querySelector('input[type="checkbox"]');
+                        byId[String(checkbox.value)] = li;
+                    });
+                    if (TERM_ORDER && TERM_ORDER.length) {
+                        var seen = {};
+                        TERM_ORDER.forEach(function (id) {
+                            var li = byId[String(id)];
+                            if (li) {
+                                list.appendChild(li);
+                                seen[String(id)] = true;
+                            }
+                        });
+                        Object.keys(byId).forEach(function (id) {
+                            if (!seen[id]) list.appendChild(byId[id]);
+                        });
                     }
+                    /* ACF empty / "No …" row – drop from DOM so it cannot occupy a grid cell. */
+                    junk.forEach(function (li) {
+                        if (li.parentNode) li.parentNode.removeChild(li);
+                    });
                 }
 
                 function reorderFields(layout) {
