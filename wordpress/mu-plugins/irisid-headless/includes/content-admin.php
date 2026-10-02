@@ -401,23 +401,15 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource #poststuff #post-body.columns-2 #postbox-container-1,'
         . 'body.post-type-resource #poststuff #post-body.columns-2 #side-sortables{'
         . 'margin-top:0;padding-top:0;}'
-        /* File type – Downloads repeater as addable boxes under Resource. */
-        . 'body.post-type-resource:not(.irisid-layout-file) #acf-group_irisid_resource_sheet,'
-        . 'body.post-type-resource:not(.irisid-layout-file) .postbox[id*="group_irisid_resource_sheet"]{'
+        /* File type – language file repeater boxes inside Resource. */
+        . 'body.post-type-resource #acf-group_irisid_resource_sheet,'
+        . 'body.post-type-resource .postbox[id*="group_irisid_resource_sheet"]{'
         . 'display:none!important;}'
-        . 'body.post-type-resource.irisid-layout-file #acf-group_irisid_resource_sheet .acf-repeater > table,'
-        . 'body.post-type-resource.irisid-layout-file .postbox[id*="group_irisid_resource_sheet"] .acf-repeater > table{'
-        . 'border:0;background:transparent;}'
-        . 'body.post-type-resource.irisid-layout-file #acf-group_irisid_resource_sheet .acf-repeater .acf-row,'
-        . 'body.post-type-resource.irisid-layout-file .postbox[id*="group_irisid_resource_sheet"] .acf-repeater .acf-row{'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_sheet_language_files"] .acf-repeater .acf-row{'
         . 'display:block;margin:0 0 12px;padding:12px 14px 8px;'
         . 'border:1px solid #c3c4c7;border-radius:2px;background:#fff;}'
-        . 'body.post-type-resource.irisid-layout-file #acf-group_irisid_resource_sheet .acf-repeater .acf-row:hover,'
-        . 'body.post-type-resource.irisid-layout-file .postbox[id*="group_irisid_resource_sheet"] .acf-repeater .acf-row:hover{'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_sheet_language_files"] .acf-repeater .acf-row:hover{'
         . 'border-color:#8c8f94;}'
-        . 'body.post-type-resource.irisid-layout-file #acf-group_irisid_resource_sheet .acf-repeater .acf-row-handle,'
-        . 'body.post-type-resource.irisid-layout-file .postbox[id*="group_irisid_resource_sheet"] .acf-repeater .acf-row-handle{'
-        . 'background:transparent;}'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action{'
         . 'float:left;margin:0;line-height:28px;}'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a{'
@@ -1235,6 +1227,10 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_resource_show_display_date'
                 ],
                 file: [
+                    'field_irisid_sheet_version',
+                    'field_irisid_sheet_document_date',
+                    'field_irisid_sheet_section',
+                    'field_irisid_sheet_language_files'
                 ],
                 event: [
                     'field_irisid_resource_body',
@@ -1268,7 +1264,11 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_resource_layout',
                     'field_irisid_resource_kind',
                     'field_irisid_resource_title',
-                    'field_irisid_resource_featured'
+                    'field_irisid_resource_featured',
+                    'field_irisid_sheet_version',
+                    'field_irisid_sheet_document_date',
+                    'field_irisid_sheet_section',
+                    'field_irisid_sheet_language_files'
                 ],
                 event: [
                     'field_irisid_resource_layout',
@@ -1329,14 +1329,12 @@ function irisid_resource_layout_admin_script(string $hook): void
                 }
 
                 function syncSheetPanel() {
-                    /* File type uses Downloads (language files) metabox under Resource. */
+                    /* Downloads fields live in the Resource box now – always hide legacy panel. */
                     var sheet =
                         document.getElementById('acf-group_irisid_resource_sheet') ||
                         document.querySelector('.postbox[id*="group_irisid_resource_sheet"]');
                     if (!sheet) return;
-                    var layout = currentLayout();
-                    sheet.style.display = layout === 'file' ? '' : 'none';
-                    sheet.classList.toggle('irisid-sheet-visible', layout === 'file');
+                    sheet.style.setProperty('display', 'none', 'important');
                 }
 
                 function applyBodyLayoutClass(layout) {

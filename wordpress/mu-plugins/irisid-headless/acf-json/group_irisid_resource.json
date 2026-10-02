@@ -121,9 +121,153 @@
       "type": "image",
       "return_format": "array",
       "preview_size": "medium",
-      "instructions": "Thumbnail for archive cards. On Video detail pages the player is shown instead of this image.",
+      "instructions": "Thumbnail for archive cards. On File cards this links to the first language download (usually English).",
       "show_in_graphql": 1,
       "graphql_field_name": "featuredImage"
+    },
+    {
+      "key": "field_irisid_sheet_version",
+      "label": "Version info",
+      "name": "version",
+      "type": "text",
+      "instructions": "Shown under the title on archive cards. e.g. v2.05 (Nov 7, 2025)",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "version"
+    },
+    {
+      "key": "field_irisid_sheet_document_date",
+      "label": "Document Date",
+      "name": "document_date",
+      "type": "date_picker",
+      "display_format": "F j, Y",
+      "return_format": "Y-m-d",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "documentDate"
+    },
+    {
+      "key": "field_irisid_sheet_section",
+      "label": "Section title",
+      "name": "section",
+      "type": "select",
+      "instructions": "Optional grouping on Data Sheets archives (leave empty for Tip Sheets / other files).",
+      "choices": {
+        "Hardware Products": "Hardware Products",
+        "Software Products": "Software Products"
+      },
+      "default_value": "",
+      "allow_null": 1,
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "section"
+    },
+    {
+      "key": "field_irisid_sheet_language_files",
+      "label": "Files by language",
+      "name": "language_files",
+      "type": "repeater",
+      "layout": "block",
+      "button_label": "Add file",
+      "instructions": "One box per language PDF. Featured image links to the first file (usually English). Use Add file / remove to manage languages.",
+      "min": 0,
+      "max": 0,
+      "collapsed": "field_irisid_sheet_lang",
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "languageFiles",
+      "sub_fields": [
+        {
+          "key": "field_irisid_sheet_file",
+          "label": "Attachment",
+          "name": "file",
+          "type": "file",
+          "return_format": "array",
+          "mime_types": "pdf,doc,docx,zip",
+          "required": 0,
+          "instructions": "PDF (or other downloadable file) for this language.",
+          "wrapper": {
+            "width": "60",
+            "class": "",
+            "id": ""
+          },
+          "show_in_graphql": 1,
+          "graphql_field_name": "file"
+        },
+        {
+          "key": "field_irisid_sheet_lang",
+          "label": "File/version name",
+          "name": "language",
+          "type": "select",
+          "choices": {
+            "English": "EN \u2013 English",
+            "Spanish": "ES \u2013 Spanish",
+            "French": "FR \u2013 French",
+            "Turkish": "TR \u2013 Turkish",
+            "German": "DE \u2013 German",
+            "Korean": "KO \u2013 Korean",
+            "Japanese": "JA \u2013 Japanese",
+            "Chinese": "ZH \u2013 Chinese",
+            "Portuguese": "PT \u2013 Portuguese",
+            "Italian": "IT \u2013 Italian",
+            "Arabic": "AR \u2013 Arabic",
+            "DOWNLOAD": "DOWNLOAD (generic)"
+          },
+          "default_value": "English",
+          "required": 0,
+          "allow_null": 1,
+          "instructions": "Label on the card button (EN, ES, FR\u2026). First row is the default download.",
+          "wrapper": {
+            "width": "40",
+            "class": "",
+            "id": ""
+          },
+          "show_in_graphql": 1,
+          "graphql_field_name": "language"
+        },
+        {
+          "key": "field_irisid_sheet_lang_url",
+          "label": "Or external / gated URL",
+          "name": "url",
+          "type": "url",
+          "required": 0,
+          "instructions": "Optional. Use when the file is behind a form page or hosted elsewhere (no upload).",
+          "show_in_graphql": 1,
+          "graphql_field_name": "url"
+        }
+      ]
     },
     {
       "key": "field_irisid_resource_video",
@@ -131,7 +275,7 @@
       "name": "video_embed",
       "type": "url",
       "instructions": "YouTube / Vimeo URL. Shown as the player on Video detail pages (Featured Image is only the archive thumbnail).",
-      "placeholder": "https://www.youtube.com/watch?v=…",
+      "placeholder": "https://www.youtube.com/watch?v=\u2026",
       "conditional_logic": [
         [
           {
@@ -214,7 +358,7 @@
       "label": "File/version name",
       "name": "file_name",
       "type": "text",
-      "instructions": "Legacy single-file label. Prefer Downloads → Files by language for File type.",
+      "instructions": "Legacy single-file label. Prefer Downloads \u2192 Files by language for File type.",
       "conditional_logic": [
         [
           {
@@ -253,7 +397,7 @@
       "label": "Event end",
       "name": "event_ends_at",
       "type": "date_picker",
-      "instructions": "Event end date (to). Optional – leave empty for a single-day event.",
+      "instructions": "Event end date (to). Optional \u2013 leave empty for a single-day event.",
       "display_format": "F j, Y",
       "return_format": "Y-m-d",
       "first_day": 0,
@@ -307,7 +451,9 @@
       "label": "Related Products",
       "name": "related_products",
       "type": "relationship",
-      "post_type": ["product"],
+      "post_type": [
+        "product"
+      ],
       "return_format": "object",
       "show_in_graphql": 1,
       "graphql_field_name": "relatedProducts"
@@ -317,7 +463,9 @@
       "label": "Related Solutions",
       "name": "related_solutions",
       "type": "relationship",
-      "post_type": ["solution"],
+      "post_type": [
+        "solution"
+      ],
       "return_format": "object",
       "show_in_graphql": 1,
       "graphql_field_name": "relatedSolutions"
@@ -338,7 +486,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789374000,
+  "modified": 1790966758,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"

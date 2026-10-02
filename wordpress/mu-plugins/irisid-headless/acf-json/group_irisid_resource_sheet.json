@@ -1,116 +1,7 @@
 {
   "key": "group_irisid_resource_sheet",
-  "title": "Downloads",
-  "fields": [
-    {
-      "key": "field_irisid_sheet_version",
-      "label": "Version info",
-      "name": "version",
-      "type": "text",
-      "instructions": "Shown under the title on archive cards. e.g. v2.05 (Nov 7, 2025)",
-      "show_in_graphql": 1,
-      "graphql_field_name": "version"
-    },
-    {
-      "key": "field_irisid_sheet_document_date",
-      "label": "Document Date",
-      "name": "document_date",
-      "type": "date_picker",
-      "display_format": "F j, Y",
-      "return_format": "Y-m-d",
-      "show_in_graphql": 1,
-      "graphql_field_name": "documentDate"
-    },
-    {
-      "key": "field_irisid_sheet_section",
-      "label": "Section title",
-      "name": "section",
-      "type": "select",
-      "instructions": "Optional grouping on Data Sheets archives (leave empty for Tip Sheets / other files).",
-      "choices": {
-        "Hardware Products": "Hardware Products",
-        "Software Products": "Software Products"
-      },
-      "default_value": "",
-      "allow_null": 1,
-      "show_in_graphql": 1,
-      "graphql_field_name": "section"
-    },
-    {
-      "key": "field_irisid_sheet_language_files",
-      "label": "Files by language",
-      "name": "language_files",
-      "type": "repeater",
-      "layout": "block",
-      "button_label": "Add file",
-      "instructions": "One box per language PDF. Featured image thumbnail links to the first file (usually English). Add or remove boxes as needed.",
-      "min": 0,
-      "max": 0,
-      "collapsed": "field_irisid_sheet_lang",
-      "show_in_graphql": 1,
-      "graphql_field_name": "languageFiles",
-      "sub_fields": [
-        {
-          "key": "field_irisid_sheet_file",
-          "label": "Attachment",
-          "name": "file",
-          "type": "file",
-          "return_format": "array",
-          "mime_types": "pdf,doc,docx,zip",
-          "required": 0,
-          "instructions": "PDF (or other downloadable file) for this language.",
-          "wrapper": {
-            "width": "60",
-            "class": "",
-            "id": ""
-          },
-          "show_in_graphql": 1,
-          "graphql_field_name": "file"
-        },
-        {
-          "key": "field_irisid_sheet_lang",
-          "label": "File/version name",
-          "name": "language",
-          "type": "select",
-          "choices": {
-            "English": "EN – English",
-            "Spanish": "ES – Spanish",
-            "French": "FR – French",
-            "Turkish": "TR – Turkish",
-            "German": "DE – German",
-            "Korean": "KO – Korean",
-            "Japanese": "JA – Japanese",
-            "Chinese": "ZH – Chinese",
-            "Portuguese": "PT – Portuguese",
-            "Italian": "IT – Italian",
-            "Arabic": "AR – Arabic",
-            "DOWNLOAD": "DOWNLOAD (generic)"
-          },
-          "default_value": "English",
-          "required": 0,
-          "allow_null": 1,
-          "instructions": "Label on the card button (EN, ES, FR…). First row is the default download.",
-          "wrapper": {
-            "width": "40",
-            "class": "",
-            "id": ""
-          },
-          "show_in_graphql": 1,
-          "graphql_field_name": "language"
-        },
-        {
-          "key": "field_irisid_sheet_lang_url",
-          "label": "Or external / gated URL",
-          "name": "url",
-          "type": "url",
-          "required": 0,
-          "instructions": "Optional. Use when the file is behind a form page or hosted elsewhere (no upload).",
-          "show_in_graphql": 1,
-          "graphql_field_name": "url"
-        }
-      ]
-    }
-  ],
+  "title": "Downloads (legacy)",
+  "fields": [],
   "location": [
     [
       {
@@ -125,9 +16,9 @@
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
-  "active": true,
-  "modified": 1789262000,
-  "show_in_rest": 1,
-  "show_in_graphql": 1,
+  "active": false,
+  "modified": 1789263000,
+  "show_in_rest": 0,
+  "show_in_graphql": 0,
   "graphql_field_name": "sheetFields"
 }
