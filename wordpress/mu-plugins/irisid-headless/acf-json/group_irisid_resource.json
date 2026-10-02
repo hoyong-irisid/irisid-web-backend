@@ -48,24 +48,6 @@
       "show_in_graphql": 0
     },
     {
-      "key": "field_irisid_resource_video",
-      "label": "Video URL",
-      "name": "video_embed",
-      "type": "oembed",
-      "instructions": "YouTube / Vimeo (or other oEmbed) URL. Shown as the player on Video detail pages.",
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "video"
-          }
-        ]
-      ],
-      "show_in_graphql": 1,
-      "graphql_field_name": "videoEmbed"
-    },
-    {
       "key": "field_irisid_resource_display_date",
       "label": "Display date",
       "name": "display_date",
@@ -128,6 +110,17 @@
       "instructions": "Thumbnail for archive cards. On Video detail pages the player is shown instead of this image.",
       "show_in_graphql": 1,
       "graphql_field_name": "featuredImage"
+    },
+    {
+      "key": "field_irisid_resource_video",
+      "label": "Video URL",
+      "name": "video_embed",
+      "type": "url",
+      "instructions": "YouTube / Vimeo URL. Shown as the player on Video detail pages (Featured Image is only the archive thumbnail).",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "conditional_logic": 0,
+      "show_in_graphql": 1,
+      "graphql_field_name": "videoEmbed"
     },
     {
       "key": "field_irisid_resource_excerpt",
