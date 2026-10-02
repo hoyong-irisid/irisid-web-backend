@@ -35,10 +35,61 @@ add_action('rest_api_init', 'irisid_register_licensing_rest_routes');
 // Field definitions are owned by git; deploy + acf_import_field_group to update.
 add_filter('acf/settings/save_json', '__return_false');
 add_filter('acf/settings/load_json', 'irisid_acf_json_load_paths');
+add_filter('acf/load_field_groups', 'irisid_dedupe_acf_field_groups', 99);
 
 /** @param array<int, string> $paths */
 function irisid_acf_json_load_paths(array $paths): array
 {
     $paths[] = IRISID_HEADLESS_DIR . '/acf-json';
     return $paths;
+}
+
+/**
+ * Keep one field group per key (highest ID wins).
+ * Repeated acf_import without a stable ID used to stack duplicate Resource groups
+ * and spam "Edit field group" cogs on the Resource editor.
+ *
+ * @param array<int, array<string, mixed>> $groups
+ * @return array<int, array<string, mixed>>
+ */
+function irisid_dedupe_acf_field_groups(array $groups): array
+{
+    $bestByKey = [];
+    $order = [];
+    foreach ($groups as $group) {
+        if (!is_array($group)) {
+            continue;
+        }
+        $key = (string) ($group['key'] ?? '');
+        if ($key === '') {
+            $order[] = ['_anon_' . count($order), $group];
+            continue;
+        }
+        $id = (int) ($group['ID'] ?? 0);
+        $prev = $bestByKey[$key] ?? null;
+        $prevId = is_array($prev) ? (int) ($prev['ID'] ?? 0) : -1;
+        if ($prev === null || $id >= $prevId) {
+            if ($prev === null) {
+                $order[] = [$key, null];
+            }
+            $bestByKey[$key] = $group;
+        }
+    }
+
+    $out = [];
+    $seen = [];
+    foreach ($order as [$key, $anon]) {
+        if ($anon !== null) {
+            $out[] = $anon;
+            continue;
+        }
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        if (isset($bestByKey[$key])) {
+            $out[] = $bestByKey[$key];
+        }
+    }
+    return $out;
 }
