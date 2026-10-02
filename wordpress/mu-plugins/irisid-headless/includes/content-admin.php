@@ -181,9 +181,9 @@ function irisid_resource_list_column_styles(): void
     }
     echo '<style id="irisid-resource-list-cols">'
         . '.wp-list-table.fixed .column-irisid_layout{width:72px;}'
-        . '.wp-list-table.fixed .column-irisid_status{width:88px;}'
-        . '.wp-list-table.fixed .column-date{width:9.5em;white-space:nowrap;}'
-        . '.wp-list-table.fixed td.column-date{overflow:hidden;text-overflow:ellipsis;}'
+        . '.wp-list-table.fixed .column-irisid_status{width:96px;}'
+        . '.wp-list-table.fixed .column-date{width:10em;white-space:nowrap;text-align:left;}'
+        . '.wp-list-table.fixed th.column-date,.wp-list-table.fixed td.column-date{padding-right:16px;overflow:hidden;text-overflow:ellipsis;}'
         . '.wp-list-table.fixed .column-title{width:auto;}'
         . '</style>';
 }
