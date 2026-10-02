@@ -641,7 +641,122 @@ function irisid_seed_resource_type_layouts(): void
 }
 
 /**
- * Resource Type editor: rename / delete / set layout, then Save.
+ * Ordered list of resource_type terms (drag order from Resource Type screen).
+ *
+ * @return list<\WP_Term>
+ */
+function irisid_get_resource_type_terms(): array
+{
+    $terms = get_terms([
+        'taxonomy'   => 'resource_type',
+        'hide_empty' => false,
+        'orderby'    => 'name',
+        'order'      => 'ASC',
+    ]);
+    if (is_wp_error($terms) || !is_array($terms)) {
+        return [];
+    }
+
+    $byId = [];
+    foreach ($terms as $term) {
+        $byId[(int) $term->term_id] = $term;
+    }
+
+    $order = get_option('irisid_resource_type_order', []);
+    if (!is_array($order) || $order === []) {
+        return array_values($byId);
+    }
+
+    $sorted = [];
+    foreach ($order as $id) {
+        $id = (int) $id;
+        if (isset($byId[$id])) {
+            $sorted[] = $byId[$id];
+            unset($byId[$id]);
+        }
+    }
+    foreach ($byId as $term) {
+        $sorted[] = $term;
+    }
+    return $sorted;
+}
+
+/**
+ * Persist Resource Type row order (term IDs).
+ *
+ * @param list<int|string> $termIds
+ */
+function irisid_save_resource_type_order(array $termIds): void
+{
+    $clean = [];
+    foreach ($termIds as $id) {
+        $id = (int) $id;
+        if ($id > 0 && !in_array($id, $clean, true)) {
+            $clean[] = $id;
+        }
+    }
+    update_option('irisid_resource_type_order', $clean, false);
+}
+
+/** Keep ACF Category checkboxes in the same order as the Resource Type screen. */
+add_filter('acf/fields/taxonomy/query/key=field_irisid_resource_kind', 'irisid_acf_resource_kind_order', 10, 1);
+
+/**
+ * @param array<string, mixed> $args
+ * @return array<string, mixed>
+ */
+function irisid_acf_resource_kind_order(array $args): array
+{
+    // ACF will still query; we reorder results via get_terms filter for this taxonomy only.
+    $args['orderby'] = 'name';
+    $args['order'] = 'ASC';
+    return $args;
+}
+
+add_filter('get_terms', 'irisid_sort_resource_type_terms', 20, 3);
+
+/**
+ * @param list<\WP_Term>|mixed $terms
+ * @param list<string>|string  $taxonomies
+ * @param array<string, mixed> $args
+ * @return list<\WP_Term>|mixed
+ */
+function irisid_sort_resource_type_terms($terms, $taxonomies, $args)
+{
+    if (!is_array($terms) || $terms === [] || !is_array($taxonomies)) {
+        return $terms;
+    }
+    if (!in_array('resource_type', $taxonomies, true)) {
+        return $terms;
+    }
+    // Only reorder when caller asked for name / default – respect explicit term_id order.
+    $orderby = (string) ($args['orderby'] ?? 'name');
+    if (in_array($orderby, ['term_id', 'term_order', 'count', 'include'], true)) {
+        return $terms;
+    }
+
+    $order = get_option('irisid_resource_type_order', []);
+    if (!is_array($order) || $order === []) {
+        return $terms;
+    }
+
+    $position = [];
+    foreach (array_values($order) as $i => $id) {
+        $position[(int) $id] = $i;
+    }
+
+    usort($terms, static function ($a, $b) use ($position) {
+        $aId = isset($a->term_id) ? (int) $a->term_id : 0;
+        $bId = isset($b->term_id) ? (int) $b->term_id : 0;
+        $aPos = $position[$aId] ?? 10000 + $aId;
+        $bPos = $position[$bId] ?? 10000 + $bId;
+        return $aPos <=> $bPos;
+    });
+    return $terms;
+}
+
+/**
+ * Resource Type editor: rename / delete / set layout / reorder, then Save.
  * Native edit-tags re-seeded deleted terms on every load; this screen owns the list.
  */
 function irisid_render_resource_types_page(): void
@@ -658,43 +773,54 @@ function irisid_render_resource_types_page(): void
         $notice = irisid_save_resource_types_form($_POST);
     }
 
-    $terms = get_terms([
-        'taxonomy'   => 'resource_type',
-        'hide_empty' => false,
-        'orderby'    => 'name',
-        'order'      => 'ASC',
-    ]);
-    if (is_wp_error($terms)) {
-        $terms = [];
-    }
-
+    $terms = irisid_get_resource_type_terms();
     $layouts = irisid_resource_layout_choices();
     $action = admin_url('edit.php?post_type=resource&page=irisid-resource-types');
+
+    wp_enqueue_script('jquery-ui-sortable');
     ?>
     <div class="wrap">
         <h1>Resource Type</h1>
-        <p>Name, slug, and layout for each site category (News &amp; Media, Press Release, …). Click <strong>Save changes</strong> to apply renames, deletes, and Type (List / Video / File / Event).</p>
+        <p>Name, slug, and layout for each site category (News &amp; Media, Press Release, …). Drag rows to reorder. Click <strong>Save changes</strong> to apply renames, deletes, Type, and order.</p>
         <?php if ($notice !== '') : ?>
             <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
         <?php endif; ?>
+        <style>
+            #irisid-resource-types-table .irisid-drag-handle{
+                cursor:move;color:#787c82;width:28px;text-align:center;vertical-align:middle;
+                user-select:none;
+            }
+            #irisid-resource-types-table .irisid-drag-handle .dashicons{font-size:18px;width:18px;height:18px;line-height:1;}
+            #irisid-resource-types-sortable tr.ui-sortable-helper{
+                background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);
+            }
+            #irisid-resource-types-sortable tr.ui-sortable-placeholder td{
+                height:48px;background:#f0f6fc;border:1px dashed #c3c4c7;
+            }
+        </style>
         <form method="post" action="<?php echo esc_url($action); ?>">
             <?php wp_nonce_field('irisid_save_resource_types', 'irisid_resource_types_nonce'); ?>
-            <table class="widefat striped" style="max-width:960px">
+            <table id="irisid-resource-types-table" class="widefat striped" style="max-width:960px">
                 <thead>
                     <tr>
-                        <th scope="col" style="width:28%">Name</th>
-                        <th scope="col" style="width:22%">Slug</th>
-                        <th scope="col" style="width:18%">Type</th>
+                        <th scope="col" style="width:36px" aria-label="Reorder"></th>
+                        <th scope="col" style="width:26%">Name</th>
+                        <th scope="col" style="width:20%">Slug</th>
+                        <th scope="col" style="width:16%">Type</th>
                         <th scope="col" style="width:10%">Count</th>
                         <th scope="col" style="width:12%">Delete</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="irisid-resource-types-sortable">
                 <?php foreach ($terms as $term) :
                     $termId = (int) $term->term_id;
                     $layout = irisid_term_resource_layout($termId, (string) $term->slug);
                     ?>
-                    <tr>
+                    <tr data-term-id="<?php echo esc_attr((string) $termId); ?>">
+                        <td class="irisid-drag-handle" title="Drag to reorder">
+                            <span class="dashicons dashicons-menu" aria-hidden="true"></span>
+                            <input type="hidden" name="types_order[]" value="<?php echo esc_attr((string) $termId); ?>" />
+                        </td>
                         <td>
                             <input type="text" class="regular-text" style="width:100%"
                                 name="types[<?php echo $termId; ?>][name]"
@@ -723,10 +849,13 @@ function irisid_render_resource_types_page(): void
                         </td>
                     </tr>
                 <?php endforeach; ?>
+                </tbody>
+                <tbody>
                     <tr>
-                        <td colspan="5" style="background:#f6f7f7;font-weight:600">Add new type</td>
+                        <td colspan="6" style="background:#f6f7f7;font-weight:600">Add new type</td>
                     </tr>
                     <tr>
+                        <td></td>
                         <td>
                             <input type="text" class="regular-text" style="width:100%"
                                 name="new_type[name]" placeholder="Name" />
@@ -756,6 +885,26 @@ function irisid_render_resource_types_page(): void
                 Slug is used in public URLs (<code>/resources/{slug}/</code>). Changing a slug can break existing links until the frontend is updated.
             </p>
         </form>
+        <script>
+        jQuery(function ($) {
+            $('#irisid-resource-types-sortable').sortable({
+                handle: '.irisid-drag-handle',
+                axis: 'y',
+                helper: function (e, tr) {
+                    var originals = tr.children();
+                    var helper = tr.clone();
+                    helper.children().each(function (i) {
+                        $(this).width(originals.eq(i).outerWidth());
+                    });
+                    return helper;
+                },
+                placeholder: 'ui-sortable-placeholder',
+                start: function (e, ui) {
+                    ui.placeholder.html('<td colspan="6">&nbsp;</td>');
+                }
+            });
+        });
+        </script>
     </div>
     <?php
 }
@@ -768,6 +917,7 @@ function irisid_save_resource_types_form(array $post): string
     $updated = 0;
     $deleted = 0;
     $created = 0;
+    $reordered = false;
     $layouts = irisid_resource_layout_choices();
 
     $rows = isset($post['types']) && is_array($post['types']) ? $post['types'] : [];
@@ -826,6 +976,25 @@ function irisid_save_resource_types_form(array $post): string
         }
     }
 
+    $orderRaw = isset($post['types_order']) && is_array($post['types_order']) ? $post['types_order'] : [];
+    if ($orderRaw !== []) {
+        $prev = get_option('irisid_resource_type_order', []);
+        $prev = is_array($prev) ? array_map('intval', $prev) : [];
+        $next = array_map('intval', $orderRaw);
+        // Drop deleted IDs from order.
+        $next = array_values(array_filter($next, static function (int $id) use ($rows): bool {
+            if ($id <= 0) {
+                return false;
+            }
+            $row = $rows[(string) $id] ?? $rows[$id] ?? null;
+            return !(is_array($row) && !empty($row['delete']));
+        }));
+        irisid_save_resource_type_order($next);
+        if ($next !== $prev) {
+            $reordered = true;
+        }
+    }
+
     $new = isset($post['new_type']) && is_array($post['new_type']) ? $post['new_type'] : [];
     $newName = sanitize_text_field((string) ($new['name'] ?? ''));
     if ($newName !== '') {
@@ -839,7 +1008,14 @@ function irisid_save_resource_types_form(array $post): string
         }
         $inserted = wp_insert_term($newName, 'resource_type', ['slug' => $newSlug]);
         if (!is_wp_error($inserted) && isset($inserted['term_id'])) {
-            update_term_meta((int) $inserted['term_id'], 'irisid_layout', $newLayout);
+            $newId = (int) $inserted['term_id'];
+            update_term_meta($newId, 'irisid_layout', $newLayout);
+            $order = get_option('irisid_resource_type_order', []);
+            if (!is_array($order)) {
+                $order = [];
+            }
+            $order[] = $newId;
+            irisid_save_resource_type_order($order);
             $created++;
         }
     }
@@ -856,6 +1032,9 @@ function irisid_save_resource_types_form(array $post): string
     }
     if ($created > 0) {
         $parts[] = sprintf('%d created', $created);
+    }
+    if ($reordered) {
+        $parts[] = 'order updated';
     }
     return $parts !== [] ? 'Saved: ' . implode(', ', $parts) . '.' : 'No changes to save.';
 }
