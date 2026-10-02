@@ -360,9 +360,11 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field li{'
         . 'margin:0!important;padding:0!important;float:none!important;width:auto!important;'
         . 'min-width:0;border:0!important;}'
-        /* ACF inserts a hidden empty value <li> – keep it out of the grid. */
+        /* ACF "No …" / empty-value rows must not take a grid cell. */
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:has(> input[type="hidden"]),'
-        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:not(:has(input[type="checkbox"])){'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:not(:has(input[type="checkbox"])),'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:has(input[value=""]),'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list > li:has(input[value="0"]){'
         . 'display:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field label{'
         . 'display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;font-weight:400;'
@@ -739,6 +741,7 @@ function irisid_save_resource_type_order(array $termIds): void
 
 /** Keep ACF Category checkboxes in the same order as the Resource Type screen. */
 add_filter('acf/fields/taxonomy/query/key=field_irisid_resource_kind', 'irisid_acf_resource_kind_order', 10, 1);
+add_filter('acf/fields/taxonomy/wp_list_categories/key=field_irisid_resource_kind', 'irisid_acf_resource_kind_wp_list', 10, 1);
 
 /**
  * @param array<string, mixed> $args
@@ -757,6 +760,29 @@ function irisid_acf_resource_kind_order(array $args): array
     $args['include'] = $ids;
     $args['orderby'] = 'include';
     unset($args['order']);
+    return $args;
+}
+
+/**
+ * Drop ACF's leading "No Resource Types" row (it ate the top-left grid cell)
+ * and force Resource Type drag order.
+ *
+ * @param array<string, mixed> $args
+ * @return array<string, mixed>
+ */
+function irisid_acf_resource_kind_wp_list(array $args): array
+{
+    $args['show_option_none'] = '';
+    $ordered = irisid_get_resource_type_terms();
+    $ids = [];
+    foreach ($ordered as $term) {
+        $ids[] = (int) $term->term_id;
+    }
+    if ($ids !== []) {
+        $args['include'] = $ids;
+        $args['orderby'] = 'include';
+        unset($args['order']);
+    }
     return $args;
 }
 
@@ -1274,13 +1300,14 @@ function irisid_resource_layout_admin_script(string $hook): void
                         var byId = {};
                         items.forEach(function (li) {
                             var checkbox = li.querySelector('input[type="checkbox"]');
-                            if (!checkbox) {
-                                /* Hidden ACF empty-value row – keep out of the 4-col grid. */
+                            var value = checkbox ? String(checkbox.value) : '';
+                            if (!checkbox || value === '' || value === '0') {
+                                /* ACF "No …" / empty-value row – keep out of the 4-col grid. */
                                 li.style.display = 'none';
                                 li.hidden = true;
                                 return;
                             }
-                            byId[String(checkbox.value)] = li;
+                            byId[value] = li;
                             li.style.display = '';
                             li.hidden = false;
                         });
