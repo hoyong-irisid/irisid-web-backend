@@ -256,8 +256,7 @@ function irisid_resource_admin_column_content(string $column, int $post_id): voi
     echo esc_html($labels[$layout]);
 }
 
-/** Description (excerpt) is edited for Event cards; List keeps auto excerpt from Body. */
-/** Keep Related / External out of the day-to-day layout editors (still in GraphQL). */
+/** Keep Related / External / Description out of the day-to-day layout editors (still in GraphQL). */
 add_filter('acf/load_value/key=field_irisid_resource_layout', 'irisid_resource_layout_drop_gallery', 10, 1);
 
 function irisid_resource_layout_drop_gallery($value)
@@ -266,6 +265,7 @@ function irisid_resource_layout_drop_gallery($value)
     return $value === 'gallery' ? 'video' : $value;
 }
 
+add_filter('acf/prepare_field/key=field_irisid_resource_excerpt', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_products', '__return_false');
 add_filter('acf/prepare_field/key=field_irisid_resource_solutions', '__return_false');
@@ -382,12 +382,6 @@ function irisid_generate_resource_excerpt($postId): void
     }
 
     $postId = (int) $postId;
-    $layout = (string) get_field('resource_layout', $postId);
-    // Event editors enter Description manually for archive cards.
-    if ($layout === 'event') {
-        return;
-    }
-
     $body = (string) get_field('body', $postId);
     $plainText = trim(wp_strip_all_tags(strip_shortcodes($body)));
     $excerpt = $plainText === '' ? '' : wp_trim_words($plainText, 32, '…');
@@ -854,6 +848,7 @@ function irisid_resource_layout_admin_script(string $hook): void
         <<<JS
         (function () {
             var TERM_ID_TO_LAYOUT = {$termLayoutJson};
+            /* Type + Category + Title + Featured always (Event needs Title for the public name). */
             var ALWAYS = [
                 'field_irisid_resource_layout',
                 'field_irisid_resource_kind',
@@ -864,39 +859,64 @@ function irisid_resource_layout_admin_script(string $hook): void
                 list: [
                     'field_irisid_resource_display_date',
                     'field_irisid_resource_show_display_date',
-                    'field_irisid_resource_attachment',
-                    'field_irisid_resource_body'
+                    'field_irisid_resource_body',
+                    'field_irisid_resource_attachment'
                 ],
                 video: [
                     'field_irisid_resource_video',
-                    'field_irisid_resource_body'
+                    'field_irisid_resource_body',
+                    'field_irisid_resource_display_date',
+                    'field_irisid_resource_show_display_date'
                 ],
                 file: [
-                    'field_irisid_resource_file_name',
-                    'field_irisid_resource_attachment'
+                    'field_irisid_resource_attachment',
+                    'field_irisid_resource_file_name'
                 ],
                 event: [
+                    'field_irisid_resource_body',
                     'field_irisid_resource_event_date',
                     'field_irisid_resource_event_ends',
-                    'field_irisid_resource_event_visibility',
-                    'field_irisid_resource_excerpt',
-                    'field_irisid_resource_body'
+                    'field_irisid_resource_event_visibility'
                 ]
             };
             var ORDER = {
-                list: ALWAYS.concat(BY_LAYOUT.list),
-                video: ALWAYS.concat(BY_LAYOUT.video),
-                file: ALWAYS.concat(BY_LAYOUT.file),
+                list: [
+                    'field_irisid_resource_layout',
+                    'field_irisid_resource_kind',
+                    'field_irisid_resource_title',
+                    'field_irisid_resource_display_date',
+                    'field_irisid_resource_show_display_date',
+                    'field_irisid_resource_featured',
+                    'field_irisid_resource_body',
+                    'field_irisid_resource_attachment'
+                ],
+                video: [
+                    'field_irisid_resource_layout',
+                    'field_irisid_resource_kind',
+                    'field_irisid_resource_title',
+                    'field_irisid_resource_featured',
+                    'field_irisid_resource_video',
+                    'field_irisid_resource_body',
+                    'field_irisid_resource_display_date',
+                    'field_irisid_resource_show_display_date'
+                ],
+                file: [
+                    'field_irisid_resource_layout',
+                    'field_irisid_resource_kind',
+                    'field_irisid_resource_title',
+                    'field_irisid_resource_featured',
+                    'field_irisid_resource_attachment',
+                    'field_irisid_resource_file_name'
+                ],
                 event: [
                     'field_irisid_resource_layout',
                     'field_irisid_resource_kind',
                     'field_irisid_resource_title',
                     'field_irisid_resource_featured',
+                    'field_irisid_resource_body',
                     'field_irisid_resource_event_date',
                     'field_irisid_resource_event_ends',
-                    'field_irisid_resource_event_visibility',
-                    'field_irisid_resource_excerpt',
-                    'field_irisid_resource_body'
+                    'field_irisid_resource_event_visibility'
                 ]
             };
             var ALL_TOGGLE = {};
@@ -932,12 +952,12 @@ function irisid_resource_layout_admin_script(string $hook): void
                 }
 
                 function syncSheetPanel() {
-                    var isFile = currentLayout() === 'file';
+                    /* File form is Attachment + File/version name only – hide legacy sheet panel. */
                     var sheet =
                         document.getElementById('acf-group_irisid_resource_sheet') ||
                         document.querySelector('.postbox[id*="group_irisid_resource_sheet"]');
                     if (!sheet) return;
-                    sheet.style.display = isFile ? '' : 'none';
+                    sheet.style.display = 'none';
                 }
 
                 function applyBodyLayoutClass(layout) {
