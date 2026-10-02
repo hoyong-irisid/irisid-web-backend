@@ -333,15 +333,15 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field.irisid-show-display-date .acf-switch{margin-top:2px;}'
         . 'body.post-type-resource .acf-field.irisid-layout-hidden{display:none!important;}'
         . 'body.post-type-resource .acf-field.irisid-layout-visible{display:block!important;}'
-        /* Category box – flush left, bordered wrap like the design reference. */
+        /* Category box – match tobe: flush left, dense wrap, Resource Type order. */
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"]{'
-        . 'padding-left:0!important;}'
+        . 'padding-left:0!important;padding-right:0!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] > .acf-label{'
         . 'margin:0 0 8px;padding:0;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] > .acf-input{'
-        . 'padding:0!important;margin:0!important;}'
+        . 'padding:0!important;margin:0!important;width:100%;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field{'
-        . 'margin:0!important;padding:10px 12px!important;'
+        . 'margin:0!important;padding:8px 10px!important;border-radius:2px;'
         . 'border:1px solid #c3c4c7;background:#fff;max-height:none;overflow:visible;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .categorychecklist-wrapper,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field .categorychecklist,'
@@ -350,13 +350,13 @@ function irisid_resource_hide_native_title(): void
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-bl,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-hl{'
         . 'display:flex!important;flex-wrap:wrap!important;align-items:center;'
-        . 'gap:10px 20px;margin:0!important;padding:0!important;list-style:none!important;}'
+        . 'gap:8px 16px;margin:0!important;padding:0!important;list-style:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-checkbox-list li,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] ul.acf-radio-list li,'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field li{'
         . 'margin:0!important;padding:0!important;float:none!important;width:auto!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field label{'
-        . 'display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;}'
+        . 'display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400;white-space:nowrap;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_kind"] .acf-taxonomy-field input[type="checkbox"]{'
         . 'margin:0!important;}'
         . 'body.post-type-resource .irisid-back-to-list{margin:0 0 12px;}'
@@ -722,13 +722,21 @@ add_filter('acf/fields/taxonomy/query/key=field_irisid_resource_kind', 'irisid_a
  */
 function irisid_acf_resource_kind_order(array $args): array
 {
-    // ACF will still query; we reorder results via get_terms filter for this taxonomy only.
-    $args['orderby'] = 'name';
-    $args['order'] = 'ASC';
+    $ordered = irisid_get_resource_type_terms();
+    $ids = [];
+    foreach ($ordered as $term) {
+        $ids[] = (int) $term->term_id;
+    }
+    if ($ids === []) {
+        return $args;
+    }
+    $args['include'] = $ids;
+    $args['orderby'] = 'include';
+    unset($args['order']);
     return $args;
 }
 
-add_filter('get_terms', 'irisid_sort_resource_type_terms', 20, 3);
+add_filter('get_terms', 'irisid_sort_resource_type_terms', 20, 4);
 
 /**
  * @param list<\WP_Term>|mixed $terms
@@ -736,17 +744,17 @@ add_filter('get_terms', 'irisid_sort_resource_type_terms', 20, 3);
  * @param array<string, mixed> $args
  * @return list<\WP_Term>|mixed
  */
-function irisid_sort_resource_type_terms($terms, $taxonomies, $args)
+function irisid_sort_resource_type_terms($terms, $taxonomies, $args, $termQuery = null)
 {
-    if (!is_array($terms) || $terms === [] || !is_array($taxonomies)) {
+    if (!is_array($terms) || $terms === []) {
         return $terms;
     }
-    if (!in_array('resource_type', $taxonomies, true)) {
+    $taxList = is_array($taxonomies) ? $taxonomies : [(string) $taxonomies];
+    if (!in_array('resource_type', $taxList, true)) {
         return $terms;
     }
-    // Only reorder when caller asked for name / default – respect explicit term_id order.
     $orderby = (string) ($args['orderby'] ?? 'name');
-    if (in_array($orderby, ['term_id', 'term_order', 'count', 'include'], true)) {
+    if ($orderby === 'include') {
         return $terms;
     }
 
@@ -1078,20 +1086,18 @@ function irisid_resource_layout_admin_script(string $hook): void
     }
 
     $termIdToLayout = [];
-    $terms = get_terms([
-        'taxonomy'   => 'resource_type',
-        'hide_empty' => false,
-    ]);
-    if (!is_wp_error($terms)) {
-        foreach ($terms as $term) {
-            $termIdToLayout[(string) $term->term_id] = irisid_term_resource_layout(
-                (int) $term->term_id,
-                (string) $term->slug
-            );
-        }
+    $termOrder = [];
+    $terms = irisid_get_resource_type_terms();
+    foreach ($terms as $term) {
+        $termIdToLayout[(string) $term->term_id] = irisid_term_resource_layout(
+            (int) $term->term_id,
+            (string) $term->slug
+        );
+        $termOrder[] = (int) $term->term_id;
     }
 
     $termLayoutJson = wp_json_encode($termIdToLayout);
+    $termOrderJson = wp_json_encode($termOrder);
 
     // Must run after ACF – jquery-core alone fires before `acf` exists.
     wp_enqueue_script('acf-input');
@@ -1100,6 +1106,7 @@ function irisid_resource_layout_admin_script(string $hook): void
         <<<JS
         (function () {
             var TERM_ID_TO_LAYOUT = {$termLayoutJson};
+            var TERM_ORDER = {$termOrderJson};
             /* Type + Category + Title + Featured always (Event needs Title for the public name). */
             var ALWAYS = [
                 'field_irisid_resource_layout',
@@ -1237,6 +1244,23 @@ function irisid_resource_layout_admin_script(string $hook): void
                     var wrap = fieldEl('field_irisid_resource_kind') ||
                         document.querySelector('.acf-field[data-name="resource_kind"]');
                     if (!wrap) return;
+                    var list = wrap.querySelector('ul.acf-checkbox-list, ul.acf-radio-list, ul');
+                    var items = Array.prototype.slice.call(wrap.querySelectorAll('li'));
+                    if (list && items.length && TERM_ORDER && TERM_ORDER.length) {
+                        var byId = {};
+                        items.forEach(function (li) {
+                            var input = li.querySelector('input[type="checkbox"], input[type="radio"]');
+                            if (!input) return;
+                            byId[String(input.value)] = li;
+                        });
+                        TERM_ORDER.forEach(function (id) {
+                            var li = byId[String(id)];
+                            if (li) list.appendChild(li);
+                        });
+                        items.forEach(function (li) {
+                            if (li.parentNode === list) list.appendChild(li);
+                        });
+                    }
                     wrap.querySelectorAll('li').forEach(function (li) {
                         li.style.display = '';
                         li.hidden = false;
