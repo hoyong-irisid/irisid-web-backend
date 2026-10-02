@@ -1256,6 +1256,8 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_sheet_version',
                     'field_irisid_sheet_section',
                     'field_irisid_sheet_sort_order',
+                    'field_irisid_sheet_download_mode',
+                    'field_irisid_sheet_download_form_id',
                     'field_irisid_sheet_language_files'
                 ],
                 event: [
@@ -1294,6 +1296,8 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_sheet_version',
                     'field_irisid_sheet_section',
                     'field_irisid_sheet_sort_order',
+                    'field_irisid_sheet_download_mode',
+                    'field_irisid_sheet_download_form_id',
                     'field_irisid_sheet_language_files'
                 ],
                 event: [
@@ -1589,6 +1593,28 @@ function irisid_ensure_resource_layout_on_save($postId): void
         }
     }
     update_field('field_irisid_resource_layout', $layout, $postId);
+}
+
+/**
+ * Populate Download form choices from active Gravity Forms.
+ */
+add_filter('acf/load_field/key=field_irisid_sheet_download_form_id', 'irisid_load_download_form_choices');
+
+function irisid_load_download_form_choices(array $field): array
+{
+    $choices = ['' => '— Select a form —'];
+    if (class_exists('GFAPI')) {
+        foreach (\GFAPI::get_forms(true) as $form) {
+            $id = (string) ($form['id'] ?? '');
+            $title = trim((string) ($form['title'] ?? ''));
+            if ($id === '') {
+                continue;
+            }
+            $choices[$id] = $title !== '' ? "{$id} – {$title}" : $id;
+        }
+    }
+    $field['choices'] = $choices;
+    return $field;
 }
 
 /**

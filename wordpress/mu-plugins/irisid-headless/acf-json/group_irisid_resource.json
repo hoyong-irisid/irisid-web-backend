@@ -200,6 +200,69 @@
       "graphql_field_name": "sortOrder"
     },
     {
+      "key": "field_irisid_sheet_download_mode",
+      "label": "Download method",
+      "name": "download_mode",
+      "type": "radio",
+      "instructions": "Direct download opens the file immediately (Data Sheets). Form then email link sends visitors to a form; after submit they receive the download link by email (Tip Sheets).",
+      "choices": {
+        "direct": "Direct download",
+        "form_email": "Form then email link"
+      },
+      "default_value": "direct",
+      "return_format": "value",
+      "layout": "vertical",
+      "wrapper": {
+        "width": "50",
+        "class": "",
+        "id": ""
+      },
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "downloadMode"
+    },
+    {
+      "key": "field_irisid_sheet_download_form_id",
+      "label": "Download form",
+      "name": "download_form_id",
+      "type": "select",
+      "instructions": "Gravity Form used on the gated download page. Tip Sheets currently use form 9.",
+      "choices": [],
+      "default_value": "",
+      "allow_null": 1,
+      "ui": 1,
+      "return_format": "value",
+      "wrapper": {
+        "width": "50",
+        "class": "",
+        "id": ""
+      },
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          },
+          {
+            "field": "field_irisid_sheet_download_mode",
+            "operator": "==",
+            "value": "form_email"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "downloadFormId"
+    },
+    {
       "key": "field_irisid_sheet_language_files",
       "label": "Files by language",
       "name": "language_files",
@@ -489,7 +552,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1790969045,
+  "modified": 1790975575,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"
