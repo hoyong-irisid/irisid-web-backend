@@ -189,12 +189,7 @@ function irisid_resource_admin_column_content(string $column, int $post_id): voi
         return;
     }
     $layout = (string) get_field('resource_layout', $post_id);
-    $labels = [
-        'list'    => 'List',
-        'gallery' => 'Gallery',
-        'file'    => 'File',
-        'event'   => 'Event',
-    ];
+    $labels = irisid_resource_layout_choices();
     // Default everything to List until an editor explicitly picks another type.
     if ($layout === '' || !isset($labels[$layout])) {
         $layout = 'list';
@@ -351,8 +346,8 @@ function irisid_resource_layout_for_type_slug(string $slug): ?string
         'insights'      => 'list',
         'iris-id-talk'  => 'list',
         'case-studies'  => 'list',
-        'videos'        => 'gallery',
-        'webinars'      => 'gallery',
+        'videos'        => 'list',
+        'webinars'      => 'list',
         'data-sheets'   => 'file',
         'tip-sheets'    => 'file',
         'literature'    => 'file',
@@ -365,10 +360,9 @@ function irisid_resource_layout_for_type_slug(string $slug): ?string
 function irisid_resource_layout_choices(): array
 {
     return [
-        'list'    => 'List',
-        'gallery' => 'Gallery',
-        'file'    => 'File',
-        'event'   => 'Event',
+        'list'  => 'List',
+        'file'  => 'File',
+        'event' => 'Event',
     ];
 }
 
@@ -763,8 +757,6 @@ function irisid_backfill_resource_layouts_from_taxonomy_v2(): void
                 }
                 if ($mapped === 'file') {
                     $layout = 'file';
-                } elseif ($mapped === 'gallery' && $layout !== 'file') {
-                    $layout = 'gallery';
                 }
             }
         }
