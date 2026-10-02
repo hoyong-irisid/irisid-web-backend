@@ -204,13 +204,6 @@
             "operator": "==",
             "value": "list"
           }
-        ],
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "file"
-          }
         ]
       ],
       "show_in_graphql": 1,
@@ -221,13 +214,13 @@
       "label": "File/version name",
       "name": "file_name",
       "type": "text",
-      "instructions": "Display name or version for the download. Leave empty to use the post title.",
+      "instructions": "Legacy single-file label. Prefer Downloads → Files by language for File type.",
       "conditional_logic": [
         [
           {
             "field": "field_irisid_resource_layout",
             "operator": "==",
-            "value": "file"
+            "value": "__never__"
           }
         ]
       ],

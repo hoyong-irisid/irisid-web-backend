@@ -1,13 +1,13 @@
 {
   "key": "group_irisid_resource_sheet",
-  "title": "File / Sheet Details",
+  "title": "Downloads",
   "fields": [
     {
       "key": "field_irisid_sheet_version",
       "label": "Version info",
       "name": "version",
       "type": "text",
-      "instructions": "Optional. e.g. Version 2.1 or Rev. 2024-06",
+      "instructions": "Shown under the title on archive cards. e.g. v2.05 (Nov 7, 2025)",
       "show_in_graphql": 1,
       "graphql_field_name": "version"
     },
@@ -38,51 +38,65 @@
     },
     {
       "key": "field_irisid_sheet_language_files",
-      "label": "Language files / attachment",
+      "label": "Files by language",
       "name": "language_files",
       "type": "repeater",
       "layout": "block",
-      "button_label": "Add language file",
-      "instructions": "One row per language PDF (or downloadable file). Language tag is optional for a single generic download.",
+      "button_label": "Add file",
+      "instructions": "One box per language PDF. Featured image thumbnail links to the first file (usually English). Add or remove boxes as needed.",
+      "min": 0,
+      "max": 0,
+      "collapsed": "field_irisid_sheet_lang",
       "show_in_graphql": 1,
       "graphql_field_name": "languageFiles",
       "sub_fields": [
         {
+          "key": "field_irisid_sheet_file",
+          "label": "Attachment",
+          "name": "file",
+          "type": "file",
+          "return_format": "array",
+          "mime_types": "pdf,doc,docx,zip",
+          "required": 0,
+          "instructions": "PDF (or other downloadable file) for this language.",
+          "wrapper": {
+            "width": "60",
+            "class": "",
+            "id": ""
+          },
+          "show_in_graphql": 1,
+          "graphql_field_name": "file"
+        },
+        {
           "key": "field_irisid_sheet_lang",
-          "label": "Language tag",
+          "label": "File/version name",
           "name": "language",
           "type": "select",
           "choices": {
-            "English": "English",
-            "Spanish": "Spanish",
-            "French": "French",
-            "Turkish": "Turkish",
-            "German": "German",
-            "Korean": "Korean",
-            "Japanese": "Japanese",
-            "Chinese": "Chinese",
-            "Portuguese": "Portuguese",
-            "Italian": "Italian",
-            "Arabic": "Arabic",
-            "DOWNLOAD": "Download (generic)"
+            "English": "EN – English",
+            "Spanish": "ES – Spanish",
+            "French": "FR – French",
+            "Turkish": "TR – Turkish",
+            "German": "DE – German",
+            "Korean": "KO – Korean",
+            "Japanese": "JA – Japanese",
+            "Chinese": "ZH – Chinese",
+            "Portuguese": "PT – Portuguese",
+            "Italian": "IT – Italian",
+            "Arabic": "AR – Arabic",
+            "DOWNLOAD": "DOWNLOAD (generic)"
           },
           "default_value": "English",
           "required": 0,
           "allow_null": 1,
+          "instructions": "Label on the card button (EN, ES, FR…). First row is the default download.",
+          "wrapper": {
+            "width": "40",
+            "class": "",
+            "id": ""
+          },
           "show_in_graphql": 1,
           "graphql_field_name": "language"
-        },
-        {
-          "key": "field_irisid_sheet_file",
-          "label": "File (PDF)",
-          "name": "file",
-          "type": "file",
-          "return_format": "array",
-          "mime_types": "pdf",
-          "required": 0,
-          "instructions": "Preferred. Upload the PDF for this language.",
-          "show_in_graphql": 1,
-          "graphql_field_name": "file"
         },
         {
           "key": "field_irisid_sheet_lang_url",
@@ -90,7 +104,7 @@
           "name": "url",
           "type": "url",
           "required": 0,
-          "instructions": "Use when the PDF is behind a form page (legacy tip sheets) or hosted elsewhere.",
+          "instructions": "Optional. Use when the file is behind a form page or hosted elsewhere (no upload).",
           "show_in_graphql": 1,
           "graphql_field_name": "url"
         }
@@ -112,7 +126,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1789261000,
+  "modified": 1789262000,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "sheetFields"
