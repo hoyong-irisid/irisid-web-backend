@@ -61,7 +61,8 @@ function irisid_simplify_content_admin_menu(): void
         'Resource Type',
         '<em>Resource Type</em>',
         'manage_categories',
-        'edit-tags.php?taxonomy=resource_type&post_type=resource'
+        'irisid-resource-types',
+        'irisid_render_resource_types_page'
     );
 }
 
@@ -555,6 +556,226 @@ function irisid_seed_resource_type_layouts(): void
         $layout = irisid_resource_layout_for_type_slug((string) $term->slug) ?? 'list';
         update_term_meta((int) $term->term_id, 'irisid_layout', $layout);
     }
+}
+
+/**
+ * Resource Type editor: rename / delete / set layout, then Save.
+ * Native edit-tags re-seeded deleted terms on every load; this screen owns the list.
+ */
+function irisid_render_resource_types_page(): void
+{
+    if (!current_user_can('manage_categories')) {
+        wp_die(esc_html__('Sorry, you are not allowed to manage resource types.', 'irisid'));
+    }
+
+    $notice = '';
+    if (
+        isset($_POST['irisid_save_resource_types'])
+        && check_admin_referer('irisid_save_resource_types', 'irisid_resource_types_nonce')
+    ) {
+        $notice = irisid_save_resource_types_form($_POST);
+    }
+
+    $terms = get_terms([
+        'taxonomy'   => 'resource_type',
+        'hide_empty' => false,
+        'orderby'    => 'name',
+        'order'      => 'ASC',
+    ]);
+    if (is_wp_error($terms)) {
+        $terms = [];
+    }
+
+    $layouts = irisid_resource_layout_choices();
+    $action = admin_url('edit.php?post_type=resource&page=irisid-resource-types');
+    ?>
+    <div class="wrap">
+        <h1>Resource Type</h1>
+        <p>Name, slug, and layout for each site category (News &amp; Media, Press Release, …). Click <strong>Save changes</strong> to apply renames, deletes, and Type (List / File / Event).</p>
+        <?php if ($notice !== '') : ?>
+            <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
+        <?php endif; ?>
+        <form method="post" action="<?php echo esc_url($action); ?>">
+            <?php wp_nonce_field('irisid_save_resource_types', 'irisid_resource_types_nonce'); ?>
+            <table class="widefat striped" style="max-width:960px">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width:28%">Name</th>
+                        <th scope="col" style="width:22%">Slug</th>
+                        <th scope="col" style="width:18%">Type</th>
+                        <th scope="col" style="width:10%">Count</th>
+                        <th scope="col" style="width:12%">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($terms as $term) :
+                    $termId = (int) $term->term_id;
+                    $layout = irisid_term_resource_layout($termId, (string) $term->slug);
+                    ?>
+                    <tr>
+                        <td>
+                            <input type="text" class="regular-text" style="width:100%"
+                                name="types[<?php echo $termId; ?>][name]"
+                                value="<?php echo esc_attr((string) $term->name); ?>" required />
+                        </td>
+                        <td>
+                            <input type="text" class="regular-text code" style="width:100%"
+                                name="types[<?php echo $termId; ?>][slug]"
+                                value="<?php echo esc_attr((string) $term->slug); ?>" required />
+                        </td>
+                        <td>
+                            <select name="types[<?php echo $termId; ?>][layout]">
+                                <?php foreach ($layouts as $value => $label) : ?>
+                                    <option value="<?php echo esc_attr($value); ?>" <?php selected($layout, $value); ?>>
+                                        <?php echo esc_html($label); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td><?php echo esc_html((string) (int) $term->count); ?></td>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="types[<?php echo $termId; ?>][delete]" value="1" />
+                                Delete
+                            </label>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                    <tr>
+                        <td colspan="5" style="background:#f6f7f7;font-weight:600">Add new type</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="regular-text" style="width:100%"
+                                name="new_type[name]" placeholder="Name" />
+                        </td>
+                        <td>
+                            <input type="text" class="regular-text code" style="width:100%"
+                                name="new_type[slug]" placeholder="slug (optional)" />
+                        </td>
+                        <td>
+                            <select name="new_type[layout]">
+                                <?php foreach ($layouts as $value => $label) : ?>
+                                    <option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td>—</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="submit" style="max-width:960px">
+                <button type="submit" name="irisid_save_resource_types" class="button button-primary" value="1">
+                    Save changes
+                </button>
+            </p>
+            <p class="description" style="max-width:960px">
+                Slug is used in public URLs (<code>/resources/{slug}/</code>). Changing a slug can break existing links until the frontend is updated.
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+/**
+ * @param array<string, mixed> $post
+ */
+function irisid_save_resource_types_form(array $post): string
+{
+    $updated = 0;
+    $deleted = 0;
+    $created = 0;
+    $layouts = irisid_resource_layout_choices();
+
+    $rows = isset($post['types']) && is_array($post['types']) ? $post['types'] : [];
+    foreach ($rows as $termIdRaw => $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $termId = (int) $termIdRaw;
+        if ($termId <= 0) {
+            continue;
+        }
+        $term = get_term($termId, 'resource_type');
+        if (!$term || is_wp_error($term)) {
+            continue;
+        }
+
+        if (!empty($row['delete'])) {
+            $result = wp_delete_term($termId, 'resource_type');
+            if (!is_wp_error($result) && $result) {
+                $deleted++;
+            }
+            continue;
+        }
+
+        $name = sanitize_text_field((string) ($row['name'] ?? ''));
+        $slug = sanitize_title((string) ($row['slug'] ?? ''));
+        $layout = sanitize_key((string) ($row['layout'] ?? 'list'));
+        if ($name === '') {
+            continue;
+        }
+        if ($slug === '') {
+            $slug = sanitize_title($name);
+        }
+        if (!isset($layouts[$layout])) {
+            $layout = 'list';
+        }
+
+        $args = [];
+        if ($name !== (string) $term->name) {
+            $args['name'] = $name;
+        }
+        if ($slug !== (string) $term->slug) {
+            $args['slug'] = $slug;
+        }
+        if ($args !== []) {
+            $result = wp_update_term($termId, 'resource_type', $args);
+            if (!is_wp_error($result)) {
+                $updated++;
+            }
+        }
+
+        $existingLayout = (string) get_term_meta($termId, 'irisid_layout', true);
+        if ($existingLayout !== $layout) {
+            update_term_meta($termId, 'irisid_layout', $layout);
+            $updated++;
+        }
+    }
+
+    $new = isset($post['new_type']) && is_array($post['new_type']) ? $post['new_type'] : [];
+    $newName = sanitize_text_field((string) ($new['name'] ?? ''));
+    if ($newName !== '') {
+        $newSlug = sanitize_title((string) ($new['slug'] ?? ''));
+        if ($newSlug === '') {
+            $newSlug = sanitize_title($newName);
+        }
+        $newLayout = sanitize_key((string) ($new['layout'] ?? 'list'));
+        if (!isset($layouts[$newLayout])) {
+            $newLayout = 'list';
+        }
+        $inserted = wp_insert_term($newName, 'resource_type', ['slug' => $newSlug]);
+        if (!is_wp_error($inserted) && isset($inserted['term_id'])) {
+            update_term_meta((int) $inserted['term_id'], 'irisid_layout', $newLayout);
+            $created++;
+        }
+    }
+
+    // Editors now own this list – never re-seed deleted terms.
+    update_option('irisid_resource_types_seeded', 1, false);
+
+    $parts = [];
+    if ($updated > 0) {
+        $parts[] = sprintf('%d updated', $updated);
+    }
+    if ($deleted > 0) {
+        $parts[] = sprintf('%d deleted', $deleted);
+    }
+    if ($created > 0) {
+        $parts[] = sprintf('%d created', $created);
+    }
+    return $parts !== [] ? 'Saved: ' . implode(', ', $parts) . '.' : 'No changes to save.';
 }
 
 /** Admin: sync layout from taxonomy checkboxes + show File/Sheet panel only for File. */

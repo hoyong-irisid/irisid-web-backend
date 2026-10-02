@@ -135,9 +135,16 @@ function irisid_register_post_types(): void
     ]));
 }
 
-/** Seed resource_type terms matching live irisid.com archive slugs. */
+/** Seed resource_type terms matching live irisid.com archive slugs (once). */
 function irisid_seed_resource_type_terms(): void
 {
+    // Only seed missing defaults the first time. After that, editors own
+    // rename / delete via the Resource Type admin screen – re-running seed
+    // would resurrect deleted terms on every page load.
+    if (get_option('irisid_resource_types_seeded')) {
+        return;
+    }
+
     $terms = [
         'news-media'    => 'News & Media',
         'press-release' => 'Press Release',
