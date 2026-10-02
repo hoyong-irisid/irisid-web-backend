@@ -297,27 +297,35 @@ function irisid_resource_hide_native_title(): void
         . 'margin-top:0!important;padding-top:0!important;min-height:0!important;height:auto!important;}'
         . 'body.post-type-resource #acf_after_title-sortables .ui-sortable-placeholder{display:none!important;}'
         . 'body.post-type-resource #acf-group_irisid_resource{margin:0 0 20px!important;}'
-        /* Type field → custom tab bar (radios stay for ACF value, visually replaced). */
+        /* Type field → custom tab bar (radios stay for ACF value). */
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"]{'
         . 'padding:0;margin:0 0 4px;border:0!important;position:relative;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] > .acf-label{'
         . 'display:none!important;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] > .acf-input{'
         . 'margin:0;position:relative;}'
-        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list{'
+        /* Hide native radios only after the tab bar is mounted. */
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"].has-irisid-tabs .acf-radio-list{'
         . 'position:absolute!important;width:1px!important;height:1px!important;padding:0!important;'
         . 'margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;border:0!important;}'
-        . 'body.post-type-resource .irisid-layout-tabbar{'
-        . 'display:flex;flex-wrap:wrap;gap:0;margin:0;padding:0;'
+        . 'body.post-type-resource .irisid-layout-tabbar,'
+        . 'body.post-type-resource #irisid-resource-layout-tabs{'
+        . 'display:flex;flex-wrap:wrap;gap:0;margin:0 0 8px;padding:0;'
         . 'border-bottom:1px solid #c3c4c7;}'
-        . 'body.post-type-resource .irisid-layout-tabbar button{'
+        . 'body.post-type-resource .irisid-layout-tabbar button,'
+        . 'body.post-type-resource #irisid-resource-layout-tabs button{'
         . 'appearance:none;-webkit-appearance:none;margin:0 0 -1px;padding:10px 16px;'
         . 'border:1px solid transparent;border-bottom:0;border-radius:4px 4px 0 0;'
         . 'background:transparent;font-size:13px;font-weight:600;line-height:1.3;'
         . 'color:#50575e;cursor:pointer;}'
-        . 'body.post-type-resource .irisid-layout-tabbar button:hover{color:#1d2327;}'
-        . 'body.post-type-resource .irisid-layout-tabbar button.is-active{'
+        . 'body.post-type-resource .irisid-layout-tabbar button:hover,'
+        . 'body.post-type-resource #irisid-resource-layout-tabs button:hover{color:#1d2327;}'
+        . 'body.post-type-resource .irisid-layout-tabbar button.is-active,'
+        . 'body.post-type-resource #irisid-resource-layout-tabs button.is-active{'
         . 'background:#fff;border-color:#c3c4c7;color:#1d2327;box-shadow:0 1px 0 #fff;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list{'
+        . 'display:flex;flex-wrap:wrap;gap:8px 14px;margin:8px 0;}'
+        . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_layout"] .acf-radio-list li{margin:0;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_resource_title"] input[type="text"]{'
         . 'font-size:1.4em;padding:8px 10px;width:100%;}'
         . 'body.post-type-resource .acf-field.irisid-display-date,'
@@ -950,16 +958,25 @@ function irisid_resource_layout_admin_script(string $hook): void
                     return;
                 }
                 acf.addAction('ready', bindLayoutUi);
-                if (acf.getField && acf.getField('field_irisid_resource_layout')) {
+                acf.addAction('append', bindLayoutUi);
+                var tries = 0;
+                (function retry() {
                     bindLayoutUi();
-                }
+                    if (!bound && tries < 40) {
+                        tries += 1;
+                        window.setTimeout(retry, 100);
+                    }
+                })();
             }
 
             var bound = false;
             function bindLayoutUi() {
                 if (bound) return;
                 var layoutField = acf.getField('field_irisid_resource_layout');
-                if (!layoutField) return;
+                if (!layoutField) {
+                    /* Field not ready yet – keep trying briefly. */
+                    return;
+                }
                 bound = true;
 
                 function currentLayout() {
@@ -1008,12 +1025,29 @@ function irisid_resource_layout_admin_script(string $hook): void
                 }
 
                 function ensureTabBar() {
+                    var existing = document.getElementById('irisid-resource-layout-tabs');
+                    if (existing) return existing;
+
                     var wrap = fieldEl('field_irisid_resource_layout');
-                    if (!wrap) return null;
-                    var input = wrap.querySelector('.acf-input') || wrap;
-                    var bar = wrap.querySelector('.irisid-layout-tabbar');
-                    if (bar) return bar;
-                    bar = document.createElement('div');
+                    var group =
+                        document.getElementById('acf-group_irisid_resource') ||
+                        document.querySelector('.postbox[id*="group_irisid_resource"]');
+                    var mountParent = null;
+                    var beforeNode = null;
+
+                    if (wrap) {
+                        var input = wrap.querySelector('.acf-input') || wrap;
+                        mountParent = input;
+                        beforeNode = input.firstChild;
+                    } else if (group) {
+                        var inside = group.querySelector('.inside') || group;
+                        mountParent = inside;
+                        beforeNode = inside.firstChild;
+                    }
+                    if (!mountParent) return null;
+
+                    var bar = document.createElement('div');
+                    bar.id = 'irisid-resource-layout-tabs';
                     bar.className = 'irisid-layout-tabbar';
                     bar.setAttribute('role', 'tablist');
                     LAYOUT_TABS.forEach(function (tab) {
@@ -1025,7 +1059,8 @@ function irisid_resource_layout_admin_script(string $hook): void
                         btn.textContent = tab.label;
                         bar.appendChild(btn);
                     });
-                    input.insertBefore(bar, input.firstChild);
+                    mountParent.insertBefore(bar, beforeNode);
+                    if (wrap) wrap.classList.add('has-irisid-tabs');
                     bar.addEventListener('click', function (e) {
                         var btn = e.target && e.target.closest
                             ? e.target.closest('button[data-layout]')
@@ -1046,23 +1081,22 @@ function irisid_resource_layout_admin_script(string $hook): void
                         btn.classList.toggle('is-active', on);
                         btn.setAttribute('aria-selected', on ? 'true' : 'false');
                     });
+                    var wrap = fieldEl('field_irisid_resource_layout');
+                    if (wrap) wrap.classList.add('has-irisid-tabs');
                 }
 
                 function setLayout(layout) {
                     if (layout === 'gallery') layout = 'video';
                     if (!BY_LAYOUT[layout]) layout = 'list';
-                    if (String(layoutField.val()) === layout) {
-                        syncResourceFields();
-                        return;
-                    }
-                    /* Drive ACF so conditional_logic + saved value stay in sync. */
-                    layoutField.val(layout);
+                    try {
+                        layoutField.val(layout);
+                    } catch (err) {}
                     var wrap = fieldEl('field_irisid_resource_layout');
                     if (wrap) {
                         var radio = wrap.querySelector(
                             'input[type="radio"][value="' + layout + '"]'
                         );
-                        if (radio && !radio.checked) {
+                        if (radio) {
                             radio.checked = true;
                             if (window.jQuery) {
                                 window.jQuery(radio).trigger('change');
@@ -1071,7 +1105,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                             }
                         }
                     }
-                    window.setTimeout(syncResourceFields, 0);
+                    syncResourceFields();
                     window.setTimeout(syncResourceFields, 50);
                 }
 

@@ -45,9 +45,8 @@ function irisid_acf_json_load_paths(array $paths): array
 }
 
 /**
- * Keep one field group per key (highest ID wins).
- * Repeated acf_import without a stable ID used to stack duplicate Resource groups
- * and spam "Edit field group" cogs on the Resource editor.
+ * Keep one field group per key.
+ * Prefer a DB-backed group (ID > 0) over a local-JSON copy (ID 0).
  *
  * @param array<int, array<string, mixed>> $groups
  * @return array<int, array<string, mixed>>
@@ -55,41 +54,52 @@ function irisid_acf_json_load_paths(array $paths): array
 function irisid_dedupe_acf_field_groups(array $groups): array
 {
     $bestByKey = [];
-    $order = [];
+    $passthrough = [];
     foreach ($groups as $group) {
         if (!is_array($group)) {
             continue;
         }
         $key = (string) ($group['key'] ?? '');
         if ($key === '') {
-            $order[] = ['_anon_' . count($order), $group];
+            $passthrough[] = $group;
             continue;
         }
         $id = (int) ($group['ID'] ?? 0);
         $prev = $bestByKey[$key] ?? null;
-        $prevId = is_array($prev) ? (int) ($prev['ID'] ?? 0) : -1;
-        if ($prev === null || $id >= $prevId) {
-            if ($prev === null) {
-                $order[] = [$key, null];
-            }
+        if ($prev === null) {
+            $bestByKey[$key] = $group;
+            continue;
+        }
+        $prevId = (int) ($prev['ID'] ?? 0);
+        // Prefer real DB posts over local JSON (ID 0).
+        if ($prevId === 0 && $id > 0) {
+            $bestByKey[$key] = $group;
+            continue;
+        }
+        if ($id === 0 && $prevId > 0) {
+            continue;
+        }
+        if ($id > $prevId) {
             $bestByKey[$key] = $group;
         }
     }
 
     $out = [];
     $seen = [];
-    foreach ($order as [$key, $anon]) {
-        if ($anon !== null) {
-            $out[] = $anon;
+    foreach ($groups as $group) {
+        if (!is_array($group)) {
+            continue;
+        }
+        $key = (string) ($group['key'] ?? '');
+        if ($key === '') {
+            $out[] = $group;
             continue;
         }
         if (isset($seen[$key])) {
             continue;
         }
         $seen[$key] = true;
-        if (isset($bestByKey[$key])) {
-            $out[] = $bestByKey[$key];
-        }
+        $out[] = $bestByKey[$key];
     }
     return $out;
 }
