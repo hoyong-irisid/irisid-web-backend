@@ -10,6 +10,7 @@
       "instructions": "Fields below change with Type.",
       "choices": {
         "list": "List",
+        "video": "Video",
         "file": "File",
         "event": "Event"
       },
@@ -51,13 +52,13 @@
       "label": "Video URL",
       "name": "video_embed",
       "type": "oembed",
-      "instructions": "YouTube / Vimeo (or other oEmbed) URL. Used for Videos / Webinars – not shown for List.",
+      "instructions": "YouTube / Vimeo (or other oEmbed) URL. Shown as the player on Video detail pages.",
       "conditional_logic": [
         [
           {
             "field": "field_irisid_resource_layout",
             "operator": "==",
-            "value": "gallery"
+            "value": "video"
           }
         ]
       ],
@@ -124,7 +125,7 @@
       "type": "image",
       "return_format": "array",
       "preview_size": "medium",
-      "instructions": "Thumbnail for archive cards / hero image for detail.",
+      "instructions": "Thumbnail for archive cards. On Video detail pages the player is shown instead of this image.",
       "show_in_graphql": 1,
       "graphql_field_name": "featuredImage"
     },
@@ -149,19 +150,26 @@
     },
     {
       "key": "field_irisid_resource_body",
-      "label": "Body",
+      "label": "Contents",
       "name": "body",
       "type": "wysiwyg",
       "tabs": "all",
       "toolbar": "full",
       "media_upload": 1,
-      "instructions": "Full article or event detail content.",
+      "instructions": "Full article, event detail, or text shown under the video.",
       "conditional_logic": [
         [
           {
             "field": "field_irisid_resource_layout",
             "operator": "==",
             "value": "list"
+          }
+        ],
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "video"
           }
         ],
         [

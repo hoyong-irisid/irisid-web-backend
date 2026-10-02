@@ -262,7 +262,8 @@ add_filter('acf/load_value/key=field_irisid_resource_layout', 'irisid_resource_l
 
 function irisid_resource_layout_drop_gallery($value)
 {
-    return $value === 'gallery' ? 'list' : $value;
+    // Legacy Gallery layout → Video.
+    return $value === 'gallery' ? 'video' : $value;
 }
 
 add_filter('acf/prepare_field/key=field_irisid_resource_external', '__return_false');
@@ -357,8 +358,8 @@ function irisid_generate_resource_excerpt($postId): void
 
     $postId = (int) $postId;
     $layout = (string) get_field('resource_layout', $postId);
-    // Gallery/Event editors enter Description manually for the 4-up cards.
-    if ($layout === 'gallery' || $layout === 'event') {
+    // Event editors enter Description manually for archive cards.
+    if ($layout === 'event') {
         return;
     }
 
@@ -394,7 +395,7 @@ function irisid_sync_resource_title_to_post($postId): void
 }
 
 /**
- * Map sidebar Resource Type taxonomy → List / Gallery / File / Event layout.
+ * Map sidebar Resource Type taxonomy → List / Video / File / Event layout.
  * Editors can still override the layout manually.
  */
 function irisid_resource_layout_for_type_slug(string $slug): ?string
@@ -405,8 +406,8 @@ function irisid_resource_layout_for_type_slug(string $slug): ?string
         'insights'      => 'list',
         'iris-id-talk'  => 'list',
         'case-studies'  => 'list',
-        'videos'        => 'list',
-        'webinars'      => 'list',
+        'videos'        => 'video',
+        'webinars'      => 'video',
         'data-sheets'   => 'file',
         'tip-sheets'    => 'file',
         'literature'    => 'file',
@@ -420,6 +421,7 @@ function irisid_resource_layout_choices(): array
 {
     return [
         'list'  => 'List',
+        'video' => 'Video',
         'file'  => 'File',
         'event' => 'Event',
     ];
@@ -548,13 +550,26 @@ function irisid_seed_resource_type_layouts(): void
     if (is_wp_error($terms)) {
         return;
     }
+
+    $migrateVideo = !get_option('irisid_video_layout_migrated');
     foreach ($terms as $term) {
-        $existing = (string) get_term_meta((int) $term->term_id, 'irisid_layout', true);
+        $termId = (int) $term->term_id;
+        $slug = (string) $term->slug;
+        $existing = (string) get_term_meta($termId, 'irisid_layout', true);
+        $mapped = irisid_resource_layout_for_type_slug($slug);
+
+        if ($migrateVideo && $mapped === 'video' && ($existing === '' || $existing === 'list' || $existing === 'gallery')) {
+            update_term_meta($termId, 'irisid_layout', 'video');
+            continue;
+        }
+
         if (isset(irisid_resource_layout_choices()[$existing])) {
             continue;
         }
-        $layout = irisid_resource_layout_for_type_slug((string) $term->slug) ?? 'list';
-        update_term_meta((int) $term->term_id, 'irisid_layout', $layout);
+        update_term_meta($termId, 'irisid_layout', $mapped ?? 'list');
+    }
+    if ($migrateVideo) {
+        update_option('irisid_video_layout_migrated', 1, false);
     }
 }
 
@@ -591,7 +606,7 @@ function irisid_render_resource_types_page(): void
     ?>
     <div class="wrap">
         <h1>Resource Type</h1>
-        <p>Name, slug, and layout for each site category (News &amp; Media, Press Release, …). Click <strong>Save changes</strong> to apply renames, deletes, and Type (List / File / Event).</p>
+        <p>Name, slug, and layout for each site category (News &amp; Media, Press Release, …). Click <strong>Save changes</strong> to apply renames, deletes, and Type (List / Video / File / Event).</p>
         <?php if ($notice !== '') : ?>
             <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
         <?php endif; ?>
@@ -827,6 +842,10 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_resource_attachment',
                     'field_irisid_resource_body'
                 ],
+                video: [
+                    'field_irisid_resource_video',
+                    'field_irisid_resource_body'
+                ],
                 file: [
                     'field_irisid_resource_file_name',
                     'field_irisid_resource_attachment'
@@ -841,6 +860,7 @@ function irisid_resource_layout_admin_script(string $hook): void
             };
             var ORDER = {
                 list: ALWAYS.concat(BY_LAYOUT.list),
+                video: ALWAYS.concat(BY_LAYOUT.video),
                 file: ALWAYS.concat(BY_LAYOUT.file),
                 event: [
                     'field_irisid_resource_layout',
@@ -858,8 +878,6 @@ function irisid_resource_layout_admin_script(string $hook): void
             Object.keys(BY_LAYOUT).forEach(function (k) {
                 BY_LAYOUT[k].forEach(function (key) { ALL_TOGGLE[key] = true; });
             });
-            // Video is for Videos / Webinars later – never show on List / File / Event.
-            ALL_TOGGLE['field_irisid_resource_video'] = true;
 
             function start() {
                 if (typeof acf === 'undefined') {
@@ -881,7 +899,7 @@ function irisid_resource_layout_admin_script(string $hook): void
 
                 function currentLayout() {
                     var value = String(layoutField.val() || 'list');
-                    return value === 'gallery' ? 'list' : value;
+                    return value === 'gallery' ? 'video' : value;
                 }
 
                 function fieldEl(key) {
@@ -898,7 +916,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                 }
 
                 function applyBodyLayoutClass(layout) {
-                    ['list', 'file', 'event'].forEach(function (l) {
+                    ['list', 'video', 'file', 'event'].forEach(function (l) {
                         document.body.classList.toggle('irisid-layout-' + l, l === layout);
                     });
                 }
