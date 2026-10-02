@@ -1255,6 +1255,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                 file: [
                     'field_irisid_sheet_version',
                     'field_irisid_sheet_section',
+                    'field_irisid_sheet_sort_order',
                     'field_irisid_sheet_language_files'
                 ],
                 event: [
@@ -1292,6 +1293,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_resource_featured',
                     'field_irisid_sheet_version',
                     'field_irisid_sheet_section',
+                    'field_irisid_sheet_sort_order',
                     'field_irisid_sheet_language_files'
                 ],
                 event: [

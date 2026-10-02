@@ -156,6 +156,11 @@
       },
       "default_value": "No section",
       "allow_null": 0,
+      "wrapper": {
+        "width": "50",
+        "class": "",
+        "id": ""
+      },
       "conditional_logic": [
         [
           {
@@ -167,6 +172,32 @@
       ],
       "show_in_graphql": 1,
       "graphql_field_name": "section"
+    },
+    {
+      "key": "field_irisid_sheet_sort_order",
+      "label": "Order",
+      "name": "sort_order",
+      "type": "number",
+      "instructions": "Lower number appears first within the same Section. Default 100.",
+      "default_value": 100,
+      "min": 0,
+      "step": 1,
+      "wrapper": {
+        "width": "25",
+        "class": "",
+        "id": ""
+      },
+      "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "file"
+          }
+        ]
+      ],
+      "show_in_graphql": 1,
+      "graphql_field_name": "sortOrder"
     },
     {
       "key": "field_irisid_sheet_language_files",
@@ -458,7 +489,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1790968833,
+  "modified": 1790969045,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"
