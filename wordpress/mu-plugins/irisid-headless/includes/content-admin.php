@@ -172,6 +172,41 @@ add_action('manage_resource_posts_custom_column', 'irisid_resource_admin_column_
 add_action('admin_head-edit.php', 'irisid_resource_list_column_styles');
 /** Date column already prints status above the timestamp – move that into Status. */
 add_filter('post_date_column_status', 'irisid_resource_omit_date_column_status', 10, 2);
+/** Replace the months dropdown with a resource category (Type) filter. */
+add_filter('months_dropdown_results', 'irisid_resource_hide_months_dropdown', 10, 2);
+add_action('restrict_manage_posts', 'irisid_resource_type_filter_dropdown');
+
+/**
+ * @param array<int, object> $months
+ * @return array<int, object>
+ */
+function irisid_resource_hide_months_dropdown(array $months, string $post_type): array
+{
+    return $post_type === 'resource' ? [] : $months;
+}
+
+function irisid_resource_type_filter_dropdown(string $post_type): void
+{
+    if ($post_type !== 'resource') {
+        return;
+    }
+
+    $taxonomy = 'resource_type';
+    $selected = isset($_GET[$taxonomy]) ? sanitize_text_field(wp_unslash((string) $_GET[$taxonomy])) : '';
+
+    wp_dropdown_categories([
+        'show_option_all' => 'All types',
+        'taxonomy'        => $taxonomy,
+        'name'            => $taxonomy,
+        'orderby'         => 'name',
+        'selected'        => $selected,
+        'hierarchical'    => false,
+        'depth'           => 1,
+        'show_count'      => true,
+        'hide_empty'      => false,
+        'value_field'     => 'slug',
+    ]);
+}
 
 function irisid_resource_list_column_styles(): void
 {
