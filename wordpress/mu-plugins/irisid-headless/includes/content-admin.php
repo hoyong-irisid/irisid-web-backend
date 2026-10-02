@@ -545,7 +545,7 @@ function irisid_resource_layout_admin_script(string $hook): void
                 list: [
                     'field_irisid_resource_display_date',
                     'field_irisid_resource_show_display_date',
-                    'field_irisid_resource_video',
+                    'field_irisid_resource_attachment',
                     'field_irisid_resource_body'
                 ],
                 file: [
@@ -579,6 +579,8 @@ function irisid_resource_layout_admin_script(string $hook): void
             Object.keys(BY_LAYOUT).forEach(function (k) {
                 BY_LAYOUT[k].forEach(function (key) { ALL_TOGGLE[key] = true; });
             });
+            // Video is for Videos / Webinars later – never show on List / File / Event.
+            ALL_TOGGLE['field_irisid_resource_video'] = true;
 
             function start() {
                 if (typeof acf === 'undefined') {

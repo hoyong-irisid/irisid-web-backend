@@ -51,13 +51,13 @@
       "label": "Video URL",
       "name": "video_embed",
       "type": "oembed",
-      "instructions": "YouTube / Vimeo (or other oEmbed) URL.",
+      "instructions": "YouTube / Vimeo (or other oEmbed) URL. Used for Videos / Webinars – not shown for List.",
       "conditional_logic": [
         [
           {
             "field": "field_irisid_resource_layout",
             "operator": "==",
-            "value": "list"
+            "value": "gallery"
           }
         ]
       ],
@@ -199,8 +199,15 @@
       "name": "attachment",
       "type": "file",
       "return_format": "array",
-      "instructions": "File to download (PDF or other). For multi-language Data/Tip Sheets, prefer Language Files in the sheet panel below.",
+      "instructions": "Optional download (PDF or other). Shown as a download box under the article on List detail. For multi-language Data/Tip Sheets, prefer Language Files in the sheet panel below.",
       "conditional_logic": [
+        [
+          {
+            "field": "field_irisid_resource_layout",
+            "operator": "==",
+            "value": "list"
+          }
+        ],
         [
           {
             "field": "field_irisid_resource_layout",
