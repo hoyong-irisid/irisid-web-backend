@@ -410,12 +410,17 @@ function irisid_resource_hide_native_title(): void
         . 'border:1px solid #c3c4c7;border-radius:2px;background:#fff;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_sheet_language_files"] .acf-repeater .acf-row:hover{'
         . 'border-color:#8c8f94;}'
+        . 'body.post-type-resource #major-publishing-actions #delete-action,'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action{'
-        . 'float:left;margin:0;line-height:28px;}'
-        . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a{'
-        . 'color:#b32d2e;text-decoration:none;font-size:13px;}'
-        . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a:hover{'
-        . 'color:#8a2424;text-decoration:underline;}'
+        . 'float:left;margin:0 14px 0 0;line-height:28px;}'
+        . 'body.post-type-resource #major-publishing-actions #delete-action a,'
+        . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a,'
+        . 'body.post-type-resource #major-publishing-actions a.submitdelete{'
+        . 'color:#b32d2e;text-decoration:none!important;font-size:13px;box-shadow:none;}'
+        . 'body.post-type-resource #major-publishing-actions #delete-action a:hover,'
+        . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a:hover,'
+        . 'body.post-type-resource #major-publishing-actions a.submitdelete:hover{'
+        . 'color:#8a2424;text-decoration:none!important;}'
         . '</style>';
     $listUrl = admin_url('edit.php?post_type=resource');
     echo '<script id="irisid-resource-align-top">(function(){'
@@ -454,9 +459,14 @@ function irisid_resource_hide_native_title(): void
         . 'cancel.id="irisid-cancel-action";'
         . 'cancel.className="irisid-cancel-action";'
         . 'cancel.innerHTML="<a href=\\""+listUrl+"\\">Cancel</a>";'
+        . 'var trash=document.getElementById("delete-action");'
         . 'var publishing=document.getElementById("publishing-action");'
-        . 'if(publishing&&publishing.parentNode===actions)actions.insertBefore(cancel,publishing);'
-        . 'else actions.insertBefore(cancel,actions.firstChild);'
+        . 'if(trash&&trash.parentNode===actions){'
+        . 'if(trash.nextSibling)actions.insertBefore(cancel,trash.nextSibling);'
+        . 'else actions.appendChild(cancel);'
+        . '}else if(publishing&&publishing.parentNode===actions){'
+        . 'actions.insertBefore(cancel,publishing);'
+        . '}else actions.insertBefore(cancel,actions.firstChild);'
         . '}'
         . 'function align(){'
         . 'var content=document.getElementById("post-body-content");'
@@ -1228,7 +1238,6 @@ function irisid_resource_layout_admin_script(string $hook): void
                 ],
                 file: [
                     'field_irisid_sheet_version',
-                    'field_irisid_sheet_document_date',
                     'field_irisid_sheet_section',
                     'field_irisid_sheet_language_files'
                 ],
@@ -1266,7 +1275,6 @@ function irisid_resource_layout_admin_script(string $hook): void
                     'field_irisid_resource_title',
                     'field_irisid_resource_featured',
                     'field_irisid_sheet_version',
-                    'field_irisid_sheet_document_date',
                     'field_irisid_sheet_section',
                     'field_irisid_sheet_language_files'
                 ],

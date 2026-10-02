@@ -144,25 +144,6 @@
       "graphql_field_name": "version"
     },
     {
-      "key": "field_irisid_sheet_document_date",
-      "label": "Document Date",
-      "name": "document_date",
-      "type": "date_picker",
-      "display_format": "F j, Y",
-      "return_format": "Y-m-d",
-      "conditional_logic": [
-        [
-          {
-            "field": "field_irisid_resource_layout",
-            "operator": "==",
-            "value": "file"
-          }
-        ]
-      ],
-      "show_in_graphql": 1,
-      "graphql_field_name": "documentDate"
-    },
-    {
       "key": "field_irisid_sheet_section",
       "label": "Section title",
       "name": "section",
@@ -486,7 +467,7 @@
   "label_placement": "top",
   "instruction_placement": "label",
   "active": true,
-  "modified": 1790966758,
+  "modified": 1790967772,
   "show_in_rest": 1,
   "show_in_graphql": 1,
   "graphql_field_name": "resourceFields"
