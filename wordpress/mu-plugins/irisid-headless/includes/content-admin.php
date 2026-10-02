@@ -801,11 +801,21 @@ function irisid_render_resource_types_page(): void
             <div class="notice notice-success is-dismissible"><p><?php echo esc_html($notice); ?></p></div>
         <?php endif; ?>
         <style>
-            #irisid-resource-types-table .irisid-drag-handle{
-                cursor:move;color:#787c82;width:28px;text-align:center;vertical-align:middle;
-                user-select:none;
+            #irisid-resource-types-table{
+                table-layout:fixed;max-width:960px;
             }
-            #irisid-resource-types-table .irisid-drag-handle .dashicons{font-size:18px;width:18px;height:18px;line-height:1;}
+            #irisid-resource-types-table .irisid-drag-col{
+                width:28px;min-width:28px;max-width:28px;padding:8px 2px!important;
+                box-sizing:border-box;
+            }
+            #irisid-resource-types-table .irisid-drag-handle{
+                cursor:move;color:#787c82;width:28px;min-width:28px;max-width:28px;
+                padding:8px 2px!important;text-align:center;vertical-align:middle;
+                user-select:none;box-sizing:border-box;
+            }
+            #irisid-resource-types-table .irisid-drag-handle .dashicons{
+                font-size:18px;width:18px;height:18px;line-height:1;display:inline-block;
+            }
             #irisid-resource-types-sortable tr.ui-sortable-helper{
                 background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);
             }
@@ -815,13 +825,13 @@ function irisid_render_resource_types_page(): void
         </style>
         <form method="post" action="<?php echo esc_url($action); ?>">
             <?php wp_nonce_field('irisid_save_resource_types', 'irisid_resource_types_nonce'); ?>
-            <table id="irisid-resource-types-table" class="widefat striped" style="max-width:960px">
+            <table id="irisid-resource-types-table" class="widefat striped">
                 <thead>
                     <tr>
-                        <th scope="col" style="width:36px" aria-label="Reorder"></th>
-                        <th scope="col" style="width:26%">Name</th>
-                        <th scope="col" style="width:20%">Slug</th>
-                        <th scope="col" style="width:16%">Type</th>
+                        <th scope="col" class="irisid-drag-col" aria-label="Reorder"></th>
+                        <th scope="col" style="width:28%">Name</th>
+                        <th scope="col" style="width:22%">Slug</th>
+                        <th scope="col" style="width:18%">Type</th>
                         <th scope="col" style="width:10%">Count</th>
                         <th scope="col" style="width:12%">Delete</th>
                     </tr>
