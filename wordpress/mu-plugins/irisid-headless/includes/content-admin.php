@@ -1566,6 +1566,51 @@ function irisid_ensure_resource_layout_on_save($postId): void
 }
 
 /**
+ * Reparent language-file attachments onto the Resource post.
+ * Uploads made from the media modal can end up parented to a trashed Auto Draft,
+ * which makes WPGraphQL return file: null on the public schema.
+ */
+add_action('acf/save_post', 'irisid_reparent_resource_language_files', 20);
+
+function irisid_reparent_resource_language_files($postId): void
+{
+    if (!is_numeric($postId) || get_post_type((int) $postId) !== 'resource') {
+        return;
+    }
+    $postId = (int) $postId;
+    $rows = get_field('language_files', $postId);
+    if (!is_array($rows)) {
+        return;
+    }
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $file = $row['file'] ?? null;
+        $attachmentId = 0;
+        if (is_array($file)) {
+            $attachmentId = (int) ($file['ID'] ?? $file['id'] ?? 0);
+        } elseif (is_numeric($file)) {
+            $attachmentId = (int) $file;
+        }
+        if ($attachmentId <= 0) {
+            continue;
+        }
+        $attachment = get_post($attachmentId);
+        if (!$attachment || $attachment->post_type !== 'attachment') {
+            continue;
+        }
+        if ((int) $attachment->post_parent === $postId) {
+            continue;
+        }
+        wp_update_post([
+            'ID' => $attachmentId,
+            'post_parent' => $postId,
+        ]);
+    }
+}
+
+/**
  * Map existing resources' Type from their Category (News=List, Videos=Gallery, …).
  */
 add_action('admin_init', 'irisid_backfill_resource_layouts_from_taxonomy_v2');
