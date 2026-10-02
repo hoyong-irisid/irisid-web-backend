@@ -146,7 +146,7 @@ function irisid_disable_legacy_resource_layout_group(array $group): array
 }
 
 /**
- * Resources list: Type (List/Gallery/File/Event) column immediately left of Date.
+ * Resources list: Type + Status immediately left of Date.
  *
  * @param array<string, string> $columns
  * @return array<string, string>
@@ -155,20 +155,23 @@ add_filter('manage_edit-resource_columns', 'irisid_resource_admin_columns');
 
 function irisid_resource_admin_columns(array $columns): array
 {
-    // Keep only checkbox + title + Type + date so Title can use the width.
+    // Keep only checkbox + title + Type + Status + date so Title can use the width.
     $cb = $columns['cb'] ?? '';
     $title = $columns['title'] ?? 'Title';
     $date = $columns['date'] ?? 'Date';
     return [
-        'cb'             => $cb,
-        'title'          => $title,
-        'irisid_layout'  => 'Type',
-        'date'           => $date,
+        'cb'              => $cb,
+        'title'           => $title,
+        'irisid_layout'   => 'Type',
+        'irisid_status'   => 'Status',
+        'date'            => $date,
     ];
 }
 
 add_action('manage_resource_posts_custom_column', 'irisid_resource_admin_column_content', 10, 2);
 add_action('admin_head-edit.php', 'irisid_resource_list_column_styles');
+/** Date column already prints status above the timestamp – move that into Status. */
+add_filter('post_date_column_status', 'irisid_resource_omit_date_column_status', 10, 2);
 
 function irisid_resource_list_column_styles(): void
 {
@@ -177,14 +180,34 @@ function irisid_resource_list_column_styles(): void
         return;
     }
     echo '<style id="irisid-resource-list-cols">'
-        . '.wp-list-table.fixed .column-irisid_layout{width:88px;}'
-        . '.wp-list-table.fixed .column-date{width:140px;}'
+        . '.wp-list-table.fixed .column-irisid_layout{width:72px;}'
+        . '.wp-list-table.fixed .column-irisid_status{width:88px;}'
+        . '.wp-list-table.fixed .column-date{width:9.5em;white-space:nowrap;}'
+        . '.wp-list-table.fixed td.column-date{overflow:hidden;text-overflow:ellipsis;}'
         . '.wp-list-table.fixed .column-title{width:auto;}'
         . '</style>';
 }
 
+/**
+ * @param string   $status Status HTML for the Date column.
+ * @param \WP_Post $post   Current row post.
+ */
+function irisid_resource_omit_date_column_status(string $status, $post): string
+{
+    if ($post instanceof \WP_Post && $post->post_type === 'resource') {
+        return '';
+    }
+    return $status;
+}
+
 function irisid_resource_admin_column_content(string $column, int $post_id): void
 {
+    if ($column === 'irisid_status') {
+        $status = get_post_status($post_id);
+        $obj = $status ? get_post_status_object($status) : null;
+        echo esc_html($obj && !empty($obj->label) ? (string) $obj->label : (string) $status);
+        return;
+    }
     if ($column !== 'irisid_layout') {
         return;
     }
