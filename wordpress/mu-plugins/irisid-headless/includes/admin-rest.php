@@ -60,7 +60,7 @@ function irisid_admin_parse_bool($value, bool $default = true): bool
 function irisid_admin_hero_mode($value): int
 {
     $mode = (int) $value;
-    return in_array($mode, [1, 2, 3, 4, 5, 6], true) ? $mode : 1;
+    return in_array($mode, [1, 2, 3, 4, 5, 6, 7], true) ? $mode : 1;
 }
 
 function irisid_admin_sanitize_media_url(string $value): string
