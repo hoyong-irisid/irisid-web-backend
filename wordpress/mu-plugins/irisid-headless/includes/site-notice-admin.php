@@ -8,6 +8,53 @@ if (!defined('ABSPATH')) {
 
 /** Site Notices list columns + lean edit screen (OLM-style schedule helpers). */
 
+/**
+ * One-time export for the Next.js /admin Notice tab (publish + draft, with ACF meta).
+ * Remove together with the site_notice CPT once the migration is done.
+ */
+add_action('rest_api_init', static function (): void {
+    register_rest_route('irisid/v1', '/admin/site-notices-export', [
+        'methods'             => 'GET',
+        'callback'            => 'irisid_rest_export_site_notices',
+        'permission_callback' => 'irisid_admin_rest_check_key',
+    ]);
+});
+
+function irisid_rest_export_site_notices(): WP_REST_Response
+{
+    $posts = get_posts([
+        'post_type'      => 'site_notice',
+        'post_status'    => ['publish', 'draft', 'pending', 'future', 'private'],
+        'posts_per_page' => 200,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ]);
+
+    $keys = [
+        'notice_body', 'cta_enabled', 'cta_label', 'cta_url', 'display_scope', 'display_style',
+        'background_color', 'text_color', 'top_bar_layout', 'text_align', 'starts_at', 'ends_at',
+        'dismiss_days',
+    ];
+
+    $out = [];
+    foreach ($posts as $post) {
+        $meta = [];
+        foreach ($keys as $key) {
+            $meta[$key] = get_post_meta($post->ID, $key, true);
+        }
+        $out[] = [
+            'id'           => $post->ID,
+            'title'        => html_entity_decode(get_the_title($post), ENT_QUOTES, 'UTF-8'),
+            'status'       => $post->post_status === 'publish' ? 'publish' : 'draft',
+            'published_at' => get_post_time('c', true, $post),
+            'modified_at'  => get_post_modified_time('c', true, $post),
+            'meta'         => $meta,
+        ];
+    }
+
+    return new WP_REST_Response(['notices' => $out]);
+}
+
 add_filter('manage_edit-site_notice_columns', 'irisid_site_notice_admin_columns');
 add_action('manage_site_notice_posts_custom_column', 'irisid_site_notice_admin_column_content', 10, 2);
 
