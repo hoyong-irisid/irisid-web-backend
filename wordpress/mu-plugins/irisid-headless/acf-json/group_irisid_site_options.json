@@ -63,7 +63,8 @@
         "2": "Option 2 – Anomalous Matter",
         "3": "Option 3 – Digital Blue Face Video",
         "4": "Option 4 – GradFlow Silk",
-        "5": "Option 5 – HUD Scan"
+        "5": "Option 5 – HUD Scan",
+        "6": "Option 6 – Verify Line (Face + Iris)"
       },
       "default_value": "1",
       "return_format": "value",
