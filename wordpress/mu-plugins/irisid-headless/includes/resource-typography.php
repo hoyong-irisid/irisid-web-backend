@@ -580,8 +580,8 @@ add_filter('acf/load_field/name=body', 'irisid_resource_body_field_help');
  */
 function irisid_resource_body_field_help(array $field): array
 {
-    $field['instructions'] = 'Visual tab: Enter = new paragraph (large gap). Shift+Enter = one line break (&lt;br&gt;). '
-        . 'An empty line that shows as &amp;nbsp; in Text is an empty paragraph – delete it; heading spacing comes from Resources → Style.';
+    $field['instructions'] = 'Visual tab: Enter = new paragraph (large gap). Shift+Enter or toolbar <strong>BR</strong> = one line break. '
+        . 'Empty &amp;nbsp; lines in Text are empty paragraphs – delete them; heading spacing comes from Resources → Style.';
     return $field;
 }
 
@@ -612,13 +612,6 @@ add_action('add_option_' . IRISID_RESOURCE_TYPOGRAPHY_OPTION, 'irisid_write_reso
 /** Style admin page preview also uses Geist; resource editor gets Shift+Enter → <br>. */
 add_action('admin_enqueue_scripts', 'irisid_resource_typography_admin_assets');
 
-function irisid_resource_headless_url(string $relative = ''): string
-{
-    $base = content_url('mu-plugins/irisid-headless');
-    $relative = ltrim($relative, '/');
-    return $relative === '' ? $base : $base . '/' . $relative;
-}
-
 function irisid_resource_typography_admin_assets(string $hook): void
 {
     if ($hook !== 'resource_page_irisid-resource-style' && !irisid_is_resource_editor_context()) {
@@ -630,20 +623,27 @@ function irisid_resource_typography_admin_assets(string $hook): void
         [],
         '5.2.5'
     );
+}
 
-    if (!irisid_is_resource_editor_context()) {
-        return;
+/**
+ * Serve TinyMCE plugin JS via admin-ajax (mu-plugins/*.js is HTTP 403 on this host).
+ */
+add_action('wp_ajax_irisid_tinymce_br', 'irisid_ajax_tinymce_br_plugin');
+
+function irisid_ajax_tinymce_br_plugin(): void
+{
+    if (!current_user_can('edit_posts')) {
+        wp_die('', 403);
     }
-
-    $jsPath = IRISID_HEADLESS_DIR . '/js/resource-editor-br.js';
-    $ver = file_exists($jsPath) ? (string) filemtime($jsPath) : '1';
-    wp_enqueue_script(
-        'irisid-resource-editor-br',
-        irisid_resource_headless_url('js/resource-editor-br.js'),
-        ['jquery'],
-        $ver,
-        true
-    );
+    $path = IRISID_HEADLESS_DIR . '/js/tinymce-irisid-br.js';
+    if (!file_exists($path)) {
+        wp_die('', 404);
+    }
+    header('Content-Type: application/javascript; charset=UTF-8');
+    header('Cache-Control: private, max-age=3600');
+    // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+    readfile($path);
+    exit;
 }
 
 /** TinyMCE plugin + toolbar BR for Resource Contents. */
@@ -662,9 +662,11 @@ function irisid_resource_mce_external_plugins(array $plugins): array
     $path = IRISID_HEADLESS_DIR . '/js/tinymce-irisid-br.js';
     $ver = file_exists($path) ? (string) filemtime($path) : '1';
     $plugins['irisid_br'] = add_query_arg(
-        'ver',
-        $ver,
-        irisid_resource_headless_url('js/tinymce-irisid-br.js')
+        [
+            'action' => 'irisid_tinymce_br',
+            'ver'    => $ver,
+        ],
+        admin_url('admin-ajax.php')
     );
     return $plugins;
 }
