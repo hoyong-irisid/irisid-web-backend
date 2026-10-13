@@ -568,21 +568,6 @@ function irisid_resource_typography_tinymce(array $init): array
         $init['content_css'] = $existingCss . ',' . $url;
     }
 
-    // Ensure Shift+Enter inserts <br> (single line). Plain Enter still creates <p>.
-    // Some Mac/Chrome + iframe combos drop the default TinyMCE binding.
-    $init['setup'] = <<<'JS'
-function (editor) {
-  editor.on('keydown', function (e) {
-    if (e.keyCode === 13 && e.shiftKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      editor.execCommand('InsertLineBreak');
-      return false;
-    }
-  });
-}
-JS;
-
     return $init;
 }
 
@@ -624,8 +609,15 @@ function irisid_resource_body_clean_empty_paragraphs($value, $postId, array $fie
 add_action('update_option_' . IRISID_RESOURCE_TYPOGRAPHY_OPTION, 'irisid_write_resource_editor_css_file', 20);
 add_action('add_option_' . IRISID_RESOURCE_TYPOGRAPHY_OPTION, 'irisid_write_resource_editor_css_file', 20);
 
-/** Style admin page preview also uses Geist. */
+/** Style admin page preview also uses Geist; resource editor gets Shift+Enter → <br>. */
 add_action('admin_enqueue_scripts', 'irisid_resource_typography_admin_assets');
+
+function irisid_resource_headless_url(string $relative = ''): string
+{
+    $base = content_url('mu-plugins/irisid-headless');
+    $relative = ltrim($relative, '/');
+    return $relative === '' ? $base : $base . '/' . $relative;
+}
 
 function irisid_resource_typography_admin_assets(string $hook): void
 {
@@ -638,4 +630,56 @@ function irisid_resource_typography_admin_assets(string $hook): void
         [],
         '5.2.5'
     );
+
+    if (!irisid_is_resource_editor_context()) {
+        return;
+    }
+
+    $jsPath = IRISID_HEADLESS_DIR . '/js/resource-editor-br.js';
+    $ver = file_exists($jsPath) ? (string) filemtime($jsPath) : '1';
+    wp_enqueue_script(
+        'irisid-resource-editor-br',
+        irisid_resource_headless_url('js/resource-editor-br.js'),
+        ['jquery'],
+        $ver,
+        true
+    );
+}
+
+/** TinyMCE plugin + toolbar BR for Resource Contents. */
+add_filter('mce_external_plugins', 'irisid_resource_mce_external_plugins', 20);
+add_filter('mce_buttons', 'irisid_resource_mce_buttons_br', 20);
+
+/**
+ * @param array<string, string> $plugins
+ * @return array<string, string>
+ */
+function irisid_resource_mce_external_plugins(array $plugins): array
+{
+    if (!irisid_is_resource_editor_context()) {
+        return $plugins;
+    }
+    $path = IRISID_HEADLESS_DIR . '/js/tinymce-irisid-br.js';
+    $ver = file_exists($path) ? (string) filemtime($path) : '1';
+    $plugins['irisid_br'] = add_query_arg(
+        'ver',
+        $ver,
+        irisid_resource_headless_url('js/tinymce-irisid-br.js')
+    );
+    return $plugins;
+}
+
+/**
+ * @param list<string> $buttons
+ * @return list<string>
+ */
+function irisid_resource_mce_buttons_br(array $buttons): array
+{
+    if (!irisid_is_resource_editor_context()) {
+        return $buttons;
+    }
+    if (!in_array('irisid_br', $buttons, true)) {
+        $buttons[] = 'irisid_br';
+    }
+    return $buttons;
 }
