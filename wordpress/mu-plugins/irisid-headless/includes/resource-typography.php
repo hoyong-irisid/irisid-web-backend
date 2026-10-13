@@ -198,15 +198,14 @@ function irisid_handle_resource_typography_save(): void
     update_option(IRISID_RESOURCE_TYPOGRAPHY_OPTION, $normalized, false);
     irisid_write_resource_editor_css_file();
 
-    // Public pages load Style CSS from the REST stylesheet URL (not inlined HTML).
-    // Purge that one CMS cache entry so the next browser request is fresh immediately.
+    // Editor CSS file + CMS JSON used by the Next.js /api/resource-typography.css proxy.
     irisid_purge_cms_nginx_paths([
-        '/wp-json/irisid/v1/resource-typography.css',
         '/wp-json/irisid/v1/resource-typography',
+        '/wp-json/irisid/v1/resource-typography.css',
         '/wp-content/uploads/irisid/resource-editor.css',
     ]);
 
-    // Also drop Next ISR for any pages that still have an old inlined copy.
+    // Purge the same-origin CSS proxy on the public site (awaited by /api/revalidate).
     $url = defined('IRISID_REVALIDATE_URL') ? IRISID_REVALIDATE_URL : getenv('IRISID_REVALIDATE_URL');
     $secret = defined('IRISID_REVALIDATE_SECRET') ? IRISID_REVALIDATE_SECRET : getenv('IRISID_REVALIDATE_SECRET');
     if ($url && $secret) {
@@ -216,7 +215,10 @@ function irisid_handle_resource_typography_save(): void
                 'Content-Type'        => 'application/json',
                 'x-revalidate-secret' => (string) $secret,
             ],
-            'body'    => wp_json_encode(['tag' => 'resource-typography']),
+            'body'    => wp_json_encode([
+                'tag'   => 'resource-typography',
+                'paths' => ['/api/resource-typography.css'],
+            ]),
         ]);
     }
 
