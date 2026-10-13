@@ -23,6 +23,7 @@ require_once IRISID_HEADLESS_DIR . '/includes/revalidate-webhook.php';
 require_once IRISID_HEADLESS_DIR . '/includes/graphql-upload.php';
 require_once IRISID_HEADLESS_DIR . '/includes/gf-captcha-headless.php';
 require_once IRISID_HEADLESS_DIR . '/includes/content-admin.php';
+require_once IRISID_HEADLESS_DIR . '/includes/resource-typography.php';
 
 add_action('init', 'irisid_register_content_types', 5);
 add_action('acf/init', 'irisid_register_acf_options_pages');
