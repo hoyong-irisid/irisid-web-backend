@@ -568,7 +568,56 @@ function irisid_resource_typography_tinymce(array $init): array
         $init['content_css'] = $existingCss . ',' . $url;
     }
 
+    // Ensure Shift+Enter inserts <br> (single line). Plain Enter still creates <p>.
+    // Some Mac/Chrome + iframe combos drop the default TinyMCE binding.
+    $init['setup'] = <<<'JS'
+function (editor) {
+  editor.on('keydown', function (e) {
+    if (e.keyCode === 13 && e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      editor.execCommand('InsertLineBreak');
+      return false;
+    }
+  });
+}
+JS;
+
     return $init;
+}
+
+/** Clarify Enter vs Shift+Enter on the Contents (body) field. */
+add_filter('acf/load_field/name=body', 'irisid_resource_body_field_help');
+
+/**
+ * @param array<string, mixed> $field
+ * @return array<string, mixed>
+ */
+function irisid_resource_body_field_help(array $field): array
+{
+    $field['instructions'] = 'Visual tab: Enter = new paragraph (large gap). Shift+Enter = one line break (&lt;br&gt;). '
+        . 'An empty line that shows as &amp;nbsp; in Text is an empty paragraph – delete it; heading spacing comes from Resources → Style.';
+    return $field;
+}
+
+/** Drop empty &nbsp; paragraphs so they do not create a double gap on the public page. */
+add_filter('acf/update_value/name=body', 'irisid_resource_body_clean_empty_paragraphs', 10, 3);
+
+/**
+ * @param mixed                $value
+ * @param int|string           $postId
+ * @param array<string, mixed> $field
+ * @return mixed
+ */
+function irisid_resource_body_clean_empty_paragraphs($value, $postId, array $field)
+{
+    unset($postId, $field);
+    if (!is_string($value) || $value === '') {
+        return $value;
+    }
+
+    $cleaned = preg_replace('/<p>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/iu', '', $value);
+    return is_string($cleaned) ? $cleaned : $value;
 }
 
 /** Rewrite CSS file whenever Style settings are saved. */
