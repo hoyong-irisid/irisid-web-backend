@@ -198,12 +198,20 @@ function irisid_handle_resource_typography_save(): void
     update_option(IRISID_RESOURCE_TYPOGRAPHY_OPTION, $normalized, false);
     irisid_write_resource_editor_css_file();
 
-    // Drop Next.js ISR cache so public resource pages pick up new CSS.
+    // Public pages load Style CSS from the REST stylesheet URL (not inlined HTML).
+    // Purge that one CMS cache entry so the next browser request is fresh immediately.
+    irisid_purge_cms_nginx_paths([
+        '/wp-json/irisid/v1/resource-typography.css',
+        '/wp-json/irisid/v1/resource-typography',
+        '/wp-content/uploads/irisid/resource-editor.css',
+    ]);
+
+    // Also drop Next ISR for any pages that still have an old inlined copy.
     $url = defined('IRISID_REVALIDATE_URL') ? IRISID_REVALIDATE_URL : getenv('IRISID_REVALIDATE_URL');
     $secret = defined('IRISID_REVALIDATE_SECRET') ? IRISID_REVALIDATE_SECRET : getenv('IRISID_REVALIDATE_SECRET');
     if ($url && $secret) {
         wp_remote_post((string) $url, [
-            'timeout' => 5,
+            'timeout' => 20,
             'headers' => [
                 'Content-Type'        => 'application/json',
                 'x-revalidate-secret' => (string) $secret,
@@ -217,6 +225,40 @@ function irisid_handle_resource_typography_save(): void
         admin_url('edit.php?post_type=resource')
     ));
     exit;
+}
+
+/**
+ * Best-effort purge of CMS-host nginx proxy cache for the given paths.
+ *
+ * @param list<string> $paths
+ */
+function irisid_purge_cms_nginx_paths(array $paths): void
+{
+    $encodings = [
+        'gzip, deflate, br, zstd',
+        'gzip, deflate, br',
+        'gzip, deflate',
+        'gzip',
+        'br',
+        'zstd',
+        '',
+    ];
+    $ua = 'IrisID-CMS-Purge/1.0';
+    foreach ($paths as $path) {
+        if (!is_string($path) || $path === '' || $path[0] !== '/') {
+            continue;
+        }
+        foreach ($encodings as $encoding) {
+            $headers = ['User-Agent' => $ua];
+            if ($encoding !== '') {
+                $headers['Accept-Encoding'] = $encoding;
+            }
+            wp_remote_get(home_url('/purge' . $path), [
+                'timeout' => 2,
+                'headers' => $headers,
+            ]);
+        }
+    }
 }
 
 function irisid_render_resource_typography_page(): void
@@ -237,7 +279,7 @@ function irisid_render_resource_typography_page(): void
     ?>
     <div class="wrap">
       <h1>Resource content style</h1>
-      <p>Controls how Contents HTML renders on every resource detail page (all Resource Types). Changes apply on the public site after the next page refresh / cache purge.</p>
+      <p>Controls how Contents HTML renders on every resource detail page (all Resource Types). Save, then refresh the public page – Style CSS loads live from the CMS (not stuck in the page cache).</p>
       <?php if (isset($_GET['updated'])) : ?>
         <div class="notice notice-success is-dismissible"><p>Styles saved.</p></div>
       <?php endif; ?>
@@ -302,13 +344,71 @@ function irisid_register_resource_typography_rest(): void
     register_rest_route('irisid/v1', '/resource-typography', [
         'methods'             => 'GET',
         'callback'            => static function (): WP_REST_Response {
-            return new WP_REST_Response([
+            $response = new WP_REST_Response([
                 'styles' => irisid_get_resource_typography(),
                 'css'    => irisid_resource_typography_css('.resource-content'),
             ], 200);
+            $response->header('Cache-Control', 'public, max-age=0, must-revalidate');
+            return $response;
         },
         'permission_callback' => '__return_true',
     ]);
+
+    // Raw CSS for <link rel="stylesheet"> on the public site – not baked into HTML.
+    register_rest_route('irisid/v1', '/resource-typography.css', [
+        'methods'             => 'GET',
+        'callback'            => static function (): WP_REST_Response {
+            return new WP_REST_Response(
+                irisid_resource_typography_css('.resource-content'),
+                200
+            );
+        },
+        'permission_callback' => '__return_true',
+    ]);
+}
+
+/**
+ * Serve /resource-typography.css as text/css (WP REST would otherwise JSON-encode).
+ *
+ * @param bool             $served
+ * @param WP_HTTP_Response $result
+ * @param WP_REST_Request  $request
+ * @param WP_REST_Server   $server
+ */
+add_filter('rest_pre_serve_request', 'irisid_serve_resource_typography_css', 10, 4);
+
+function irisid_serve_resource_typography_css($served, $result, $request, $server)
+{
+    unset($server);
+    if (!($request instanceof WP_REST_Request)) {
+        return $served;
+    }
+    if ($request->get_route() !== '/irisid/v1/resource-typography.css') {
+        return $served;
+    }
+
+    $css = '';
+    if ($result instanceof WP_REST_Response) {
+        $data = $result->get_data();
+        $css = is_string($data) ? $data : '';
+    }
+
+    $etag = '"' . md5($css) . '"';
+    header('Content-Type: text/css; charset=UTF-8');
+    header('Cache-Control: public, max-age=0, must-revalidate');
+    header('ETag: ' . $etag);
+
+    $ifNoneMatch = isset($_SERVER['HTTP_IF_NONE_MATCH'])
+        ? trim((string) $_SERVER['HTTP_IF_NONE_MATCH'])
+        : '';
+    if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+        status_header(304);
+        return true;
+    }
+
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw CSS
+    echo $css;
+    return true;
 }
 
 /**
