@@ -283,7 +283,7 @@ function irisid_render_resource_typography_page(): void
       </form>
       <h2 style="margin-top:2rem;">Preview (editor)</h2>
       <div class="irisid-resource-style-preview" style="max-width:720px;padding:24px;border:1px solid #d4d4d8;background:#fff;">
-        <style><?php echo irisid_resource_typography_css('.irisid-resource-style-preview'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></style>
+        <style><?php echo irisid_resource_typography_editor_css('.irisid-resource-style-preview'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></style>
         <h1>Heading 1 sample</h1>
         <h2>Heading 2 sample</h2>
         <h3>Heading 3 sample</h3>
@@ -310,24 +310,154 @@ function irisid_register_resource_typography_rest(): void
     ]);
 }
 
-/** Make Heading 1–4 visibly distinct inside the ACF Contents WYSIWYG. */
-add_filter('tiny_mce_before_init', 'irisid_resource_typography_tinymce', 20);
+/**
+ * Geist + Style-admin rules for TinyMCE / Style page preview.
+ * Uses the same saved sizes/weights as the public site.
+ */
+function irisid_resource_typography_editor_css(string $selector = 'body'): string
+{
+    $geist = <<<'CSS'
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.2.5/files/geist-latin-wght-normal.woff2") format("woff2-variations");
+}
+CSS;
+
+    $base = <<<CSS
+{$selector} {
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 16px;
+  color: #0a0a0a;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+{$selector} * {
+  font-family: inherit;
+}
+CSS;
+
+    return trim($geist . "\n" . $base . "\n" . irisid_resource_typography_css($selector));
+}
+
+function irisid_is_resource_editor_context(): bool
+{
+    if (!is_admin()) {
+        return false;
+    }
+
+    $postType = isset($_GET['post_type']) ? sanitize_key((string) wp_unslash($_GET['post_type'])) : '';
+    if ($postType === 'resource') {
+        return true;
+    }
+
+    $postId = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    if ($postId > 0 && get_post_type($postId) === 'resource') {
+        return true;
+    }
+
+    // ACF / TinyMCE often boot over admin-ajax after the edit screen loads.
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        $ref = wp_get_referer();
+        if (is_string($ref) && $ref !== '') {
+            if (strpos($ref, 'post_type=resource') !== false) {
+                return true;
+            }
+            if (preg_match('/[?&]post=(\d+)/', $ref, $matches)) {
+                return get_post_type((int) $matches[1]) === 'resource';
+            }
+        }
+    }
+
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    return $screen && $screen->post_type === 'resource';
+}
+
+/** Serve editor CSS (Geist + saved Style rules) for TinyMCE content_css. */
+add_action('wp_ajax_irisid_resource_editor_css', 'irisid_ajax_resource_editor_css');
+
+function irisid_ajax_resource_editor_css(): void
+{
+    if (!current_user_can('edit_posts')) {
+        status_header(403);
+        exit;
+    }
+    nocache_headers();
+    header('Content-Type: text/css; charset=UTF-8');
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS stylesheet body.
+    echo irisid_resource_typography_editor_css('body');
+    exit;
+}
+
+function irisid_resource_editor_css_url(): string
+{
+    $styles = irisid_get_resource_typography();
+    $ver = substr(md5((string) wp_json_encode($styles)), 0, 12);
+    return add_query_arg(
+        [
+            'action' => 'irisid_resource_editor_css',
+            'ver'    => $ver,
+        ],
+        admin_url('admin-ajax.php')
+    );
+}
+
+/** Load stylesheet into the TinyMCE iframe (ACF Contents field). */
+add_filter('mce_css', 'irisid_resource_typography_mce_css', 20);
+
+function irisid_resource_typography_mce_css(string $mceCss): string
+{
+    if (!irisid_is_resource_editor_context()) {
+        return $mceCss;
+    }
+    $url = irisid_resource_editor_css_url();
+    return $mceCss === '' ? $url : $mceCss . ',' . $url;
+}
 
 /**
  * @param array<string, mixed> $init
  * @return array<string, mixed>
  */
+add_filter('tiny_mce_before_init', 'irisid_resource_typography_tinymce', 20);
+
 function irisid_resource_typography_tinymce(array $init): array
 {
-    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-    if (!$screen || $screen->post_type !== 'resource') {
+    if (!irisid_is_resource_editor_context()) {
         return $init;
     }
 
-    $css = irisid_resource_typography_css('body');
-    $css = str_replace(["\n", "\r"], ' ', $css);
-    $existing = isset($init['content_style']) ? (string) $init['content_style'] : '';
-    $init['content_style'] = trim($existing . ' ' . $css);
+    $url = irisid_resource_editor_css_url();
+    $existingCss = isset($init['content_css']) ? (string) $init['content_css'] : '';
+    if ($existingCss === '') {
+        $init['content_css'] = $url;
+    } elseif (strpos($existingCss, 'irisid_resource_editor_css') === false) {
+        $init['content_css'] = $existingCss . ',' . $url;
+    }
+
+    // Inline fallback so Heading/Paragraph still differ if content_css is delayed.
+    $inline = irisid_resource_typography_editor_css('body');
+    $inline = str_replace(["\n", "\r"], ' ', $inline);
+    $existingStyle = isset($init['content_style']) ? (string) $init['content_style'] : '';
+    $init['content_style'] = trim($existingStyle . ' ' . $inline);
+    $init['body_class'] = trim((string) ($init['body_class'] ?? '') . ' irisid-resource-editor');
 
     return $init;
+}
+
+/** Style admin page preview also uses Geist. */
+add_action('admin_enqueue_scripts', 'irisid_resource_typography_admin_assets');
+
+function irisid_resource_typography_admin_assets(string $hook): void
+{
+    if ($hook !== 'resource_page_irisid-resource-style' && !irisid_is_resource_editor_context()) {
+        return;
+    }
+    wp_enqueue_style(
+        'irisid-geist-font',
+        'https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.2.5/index.css',
+        [],
+        '5.2.5'
+    );
 }
