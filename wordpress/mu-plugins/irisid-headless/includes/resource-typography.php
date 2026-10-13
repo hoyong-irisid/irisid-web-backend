@@ -394,6 +394,8 @@ function irisid_serve_resource_typography_css($served, $result, $request, $serve
     }
 
     $etag = '"' . md5($css) . '"';
+    // WP REST may have already negotiated 406 for non-JSON Accept – force 200 for <link>.
+    status_header(200);
     header('Content-Type: text/css; charset=UTF-8');
     header('Cache-Control: public, max-age=0, must-revalidate');
     header('ETag: ' . $etag);
