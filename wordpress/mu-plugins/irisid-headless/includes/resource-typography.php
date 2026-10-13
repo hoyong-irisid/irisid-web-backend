@@ -196,6 +196,7 @@ function irisid_handle_resource_typography_save(): void
         : [];
     $normalized = irisid_normalize_resource_typography($raw);
     update_option(IRISID_RESOURCE_TYPOGRAPHY_OPTION, $normalized, false);
+    irisid_write_resource_editor_css_file();
 
     // Drop Next.js ISR cache so public resource pages pick up new CSS.
     $url = defined('IRISID_REVALIDATE_URL') ? IRISID_REVALIDATE_URL : getenv('IRISID_REVALIDATE_URL');
@@ -312,7 +313,8 @@ function irisid_register_resource_typography_rest(): void
 
 /**
  * Geist + Style-admin rules for TinyMCE / Style page preview.
- * Uses the same saved sizes/weights as the public site.
+ * Kept as an external stylesheet only – never inject into TinyMCE
+ * content_style (quotes/@font-face break the Visual editor init).
  */
 function irisid_resource_typography_editor_css(string $selector = 'body'): string
 {
@@ -342,6 +344,48 @@ CSS;
     return trim($geist . "\n" . $base . "\n" . irisid_resource_typography_css($selector));
 }
 
+/** Absolute path for the generated TinyMCE content stylesheet. */
+function irisid_resource_editor_css_file_path(): string
+{
+    $upload = wp_upload_dir();
+    $dir = trailingslashit($upload['basedir']) . 'irisid';
+    if (!is_dir($dir)) {
+        wp_mkdir_p($dir);
+    }
+    return trailingslashit($dir) . 'resource-editor.css';
+}
+
+function irisid_resource_editor_css_file_url(): string
+{
+    $upload = wp_upload_dir();
+    $styles = irisid_get_resource_typography();
+    $ver = substr(md5((string) wp_json_encode($styles)), 0, 12);
+    return add_query_arg(
+        'ver',
+        $ver,
+        trailingslashit($upload['baseurl']) . 'irisid/resource-editor.css'
+    );
+}
+
+/** Write/refresh the public CSS file TinyMCE loads via content_css. */
+function irisid_write_resource_editor_css_file(): bool
+{
+    $path = irisid_resource_editor_css_file_path();
+    $css = irisid_resource_typography_editor_css('body') . "\n";
+    // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+    return false !== file_put_contents($path, $css);
+}
+
+add_action('init', 'irisid_ensure_resource_editor_css_file', 30);
+
+function irisid_ensure_resource_editor_css_file(): void
+{
+    $path = irisid_resource_editor_css_file_path();
+    if (!file_exists($path)) {
+        irisid_write_resource_editor_css_file();
+    }
+}
+
 function irisid_is_resource_editor_context(): bool
 {
     if (!is_admin()) {
@@ -358,7 +402,6 @@ function irisid_is_resource_editor_context(): bool
         return true;
     }
 
-    // ACF / TinyMCE often boot over admin-ajax after the edit screen loads.
     if (defined('DOING_AJAX') && DOING_AJAX) {
         $ref = wp_get_referer();
         if (is_string($ref) && $ref !== '') {
@@ -372,36 +415,7 @@ function irisid_is_resource_editor_context(): bool
     }
 
     $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-    return $screen && $screen->post_type === 'resource';
-}
-
-/** Serve editor CSS (Geist + saved Style rules) for TinyMCE content_css. */
-add_action('wp_ajax_irisid_resource_editor_css', 'irisid_ajax_resource_editor_css');
-
-function irisid_ajax_resource_editor_css(): void
-{
-    if (!current_user_can('edit_posts')) {
-        status_header(403);
-        exit;
-    }
-    nocache_headers();
-    header('Content-Type: text/css; charset=UTF-8');
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS stylesheet body.
-    echo irisid_resource_typography_editor_css('body');
-    exit;
-}
-
-function irisid_resource_editor_css_url(): string
-{
-    $styles = irisid_get_resource_typography();
-    $ver = substr(md5((string) wp_json_encode($styles)), 0, 12);
-    return add_query_arg(
-        [
-            'action' => 'irisid_resource_editor_css',
-            'ver'    => $ver,
-        ],
-        admin_url('admin-ajax.php')
-    );
+    return (bool) ($screen && $screen->post_type === 'resource');
 }
 
 /** Load stylesheet into the TinyMCE iframe (ACF Contents field). */
@@ -412,11 +426,14 @@ function irisid_resource_typography_mce_css(string $mceCss): string
     if (!irisid_is_resource_editor_context()) {
         return $mceCss;
     }
-    $url = irisid_resource_editor_css_url();
+    irisid_write_resource_editor_css_file();
+    $url = irisid_resource_editor_css_file_url();
     return $mceCss === '' ? $url : $mceCss . ',' . $url;
 }
 
 /**
+ * Only append content_css URL – do NOT set content_style (breaks Visual tab).
+ *
  * @param array<string, mixed> $init
  * @return array<string, mixed>
  */
@@ -428,23 +445,31 @@ function irisid_resource_typography_tinymce(array $init): array
         return $init;
     }
 
-    $url = irisid_resource_editor_css_url();
+    // Drop any previous broken inline styles from older plugin versions.
+    if (isset($init['content_style']) && is_string($init['content_style'])) {
+        if (strpos($init['content_style'], 'Geist') !== false
+            || strpos($init['content_style'], 'resource-content') !== false
+            || strpos($init['content_style'], '@font-face') !== false
+        ) {
+            unset($init['content_style']);
+        }
+    }
+
+    irisid_write_resource_editor_css_file();
+    $url = irisid_resource_editor_css_file_url();
     $existingCss = isset($init['content_css']) ? (string) $init['content_css'] : '';
     if ($existingCss === '') {
         $init['content_css'] = $url;
-    } elseif (strpos($existingCss, 'irisid_resource_editor_css') === false) {
+    } elseif (strpos($existingCss, 'resource-editor.css') === false) {
         $init['content_css'] = $existingCss . ',' . $url;
     }
 
-    // Inline fallback so Heading/Paragraph still differ if content_css is delayed.
-    $inline = irisid_resource_typography_editor_css('body');
-    $inline = str_replace(["\n", "\r"], ' ', $inline);
-    $existingStyle = isset($init['content_style']) ? (string) $init['content_style'] : '';
-    $init['content_style'] = trim($existingStyle . ' ' . $inline);
-    $init['body_class'] = trim((string) ($init['body_class'] ?? '') . ' irisid-resource-editor');
-
     return $init;
 }
+
+/** Rewrite CSS file whenever Style settings are saved. */
+add_action('update_option_' . IRISID_RESOURCE_TYPOGRAPHY_OPTION, 'irisid_write_resource_editor_css_file', 20);
+add_action('add_option_' . IRISID_RESOURCE_TYPOGRAPHY_OPTION, 'irisid_write_resource_editor_css_file', 20);
 
 /** Style admin page preview also uses Geist. */
 add_action('admin_enqueue_scripts', 'irisid_resource_typography_admin_assets');
