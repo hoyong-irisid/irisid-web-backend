@@ -1197,6 +1197,62 @@ function irisid_save_resource_types_form(array $post): string
     return $parts !== [] ? 'Saved: ' . implode(', ', $parts) . '.' : 'No changes to save.';
 }
 
+/** Publish box: Preview + Update left-aligned; Update then Cancel/Trash. */
+add_action('admin_enqueue_scripts', 'irisid_publish_box_admin_styles');
+
+function irisid_publish_box_admin_styles(string $hook): void
+{
+    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+
+    $css = <<<'CSS'
+/* Preview Changes – left */
+#minor-publishing-actions {
+  text-align: left;
+}
+#minor-publishing-actions #preview-action {
+  float: none;
+  text-align: left;
+  margin: 0 0 8px;
+}
+#minor-publishing-actions #save-action {
+  float: none;
+  text-align: left;
+}
+
+/* Footer actions: Update first, Cancel/Trash to its right – both left-aligned */
+#major-publishing-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+#major-publishing-actions #publishing-action {
+  float: none;
+  order: 1;
+  text-align: left;
+  margin: 0;
+  line-height: normal;
+}
+#major-publishing-actions #delete-action {
+  float: none;
+  order: 2;
+  margin: 0;
+  line-height: normal;
+}
+#major-publishing-actions .clear {
+  display: none;
+}
+CSS;
+
+    wp_register_style('irisid-publish-box', false, [], IRISID_HEADLESS_VERSION);
+    wp_enqueue_style('irisid-publish-box');
+    wp_add_inline_style('irisid-publish-box', $css);
+}
+
 /** Admin: sync layout from taxonomy checkboxes + show File/Sheet panel only for File. */
 add_action('admin_enqueue_scripts', 'irisid_resource_layout_admin_script');
 
