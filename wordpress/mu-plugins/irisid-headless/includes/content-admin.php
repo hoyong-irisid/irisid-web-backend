@@ -425,13 +425,25 @@ function irisid_resource_hide_native_title(): void
         . 'background-size:4px 4px;background-position:center;opacity:.85;}'
         . 'body.post-type-resource .acf-field[data-key="field_irisid_sheet_language_files"] .acf-repeater .acf-row:hover > td{'
         . 'border-color:#8c8f94;}'
+        /* Publish box: Preview + Update left; Update then Cancel. */
+        . 'body.post-type-resource #minor-publishing-actions{'
+        . 'text-align:left!important;}'
+        . 'body.post-type-resource #minor-publishing-actions #preview-action,'
+        . 'body.post-type-resource #minor-publishing-actions #save-action{'
+        . 'float:none!important;display:block!important;text-align:left!important;margin:0 0 8px!important;}'
+        . 'body.post-type-resource #major-publishing-actions{'
+        . 'display:flex!important;flex-direction:row;flex-wrap:wrap;align-items:center;'
+        . 'justify-content:flex-start!important;gap:12px;}'
         . 'body.post-type-resource #major-publishing-actions #delete-action{'
         . 'display:none!important;}'
         . 'body.post-type-resource #major-publishing-actions #publishing-action{'
-        . 'float:right;display:flex;align-items:center;justify-content:flex-end;gap:12px;'
-        . 'line-height:28px;}'
+        . 'float:none!important;display:flex!important;align-items:center;'
+        . 'justify-content:flex-start!important;gap:12px;margin:0!important;'
+        . 'line-height:28px;text-align:left!important;}'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action{'
-        . 'float:none;margin:0;line-height:28px;order:-1;}'
+        . 'float:none!important;margin:0;line-height:28px;order:2;}'
+        . 'body.post-type-resource #major-publishing-actions #publishing-action > *:not(.irisid-cancel-action){'
+        . 'order:1;}'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a{'
         . 'color:#b32d2e;text-decoration:none!important;font-size:13px;box-shadow:none;}'
         . 'body.post-type-resource #major-publishing-actions .irisid-cancel-action a:hover{'
@@ -479,9 +491,9 @@ function irisid_resource_hide_native_title(): void
         . 'cancel.className="irisid-cancel-action";'
         . 'cancel.innerHTML="<a href=\\""+listUrl+"\\">Cancel</a>";'
         . '}'
-        . '/* Keep Cancel immediately left of Update inside #publishing-action. */'
-        . 'if(cancel.parentNode!==publishing||publishing.firstElementChild!==cancel){'
-        . 'publishing.insertBefore(cancel,publishing.firstChild);'
+        . '/* Keep Cancel immediately right of Update inside #publishing-action. */'
+        . 'if(cancel.parentNode!==publishing||publishing.lastElementChild!==cancel){'
+        . 'publishing.appendChild(cancel);'
         . '}'
         . '}'
         . 'function align(){'
@@ -1195,62 +1207,6 @@ function irisid_save_resource_types_form(array $post): string
         $parts[] = 'order updated';
     }
     return $parts !== [] ? 'Saved: ' . implode(', ', $parts) . '.' : 'No changes to save.';
-}
-
-/** Publish box: Preview + Update left-aligned; Update then Cancel/Trash. */
-add_action('admin_enqueue_scripts', 'irisid_publish_box_admin_styles');
-
-function irisid_publish_box_admin_styles(string $hook): void
-{
-    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
-        return;
-    }
-
-    $css = <<<'CSS'
-/* Preview Changes – left */
-#minor-publishing-actions {
-  text-align: left;
-}
-#minor-publishing-actions #preview-action {
-  float: none;
-  text-align: left;
-  margin: 0 0 8px;
-}
-#minor-publishing-actions #save-action {
-  float: none;
-  text-align: left;
-}
-
-/* Footer actions: Update first, Cancel/Trash to its right – both left-aligned */
-#major-publishing-actions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-}
-#major-publishing-actions #publishing-action {
-  float: none;
-  order: 1;
-  text-align: left;
-  margin: 0;
-  line-height: normal;
-}
-#major-publishing-actions #delete-action {
-  float: none;
-  order: 2;
-  margin: 0;
-  line-height: normal;
-}
-#major-publishing-actions .clear {
-  display: none;
-}
-CSS;
-
-    wp_register_style('irisid-publish-box', false, [], IRISID_HEADLESS_VERSION);
-    wp_enqueue_style('irisid-publish-box');
-    wp_add_inline_style('irisid-publish-box', $css);
 }
 
 /** Admin: sync layout from taxonomy checkboxes + show File/Sheet panel only for File. */
