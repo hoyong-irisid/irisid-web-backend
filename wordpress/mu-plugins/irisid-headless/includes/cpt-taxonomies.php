@@ -12,6 +12,7 @@ function irisid_register_content_types(): void
     irisid_register_post_types();
     irisid_register_licensing_post_types();
     irisid_seed_resource_type_terms();
+    irisid_ensure_file_resource_type_terms();
 }
 
 function irisid_register_taxonomies(): void
@@ -128,17 +129,18 @@ function irisid_seed_resource_type_terms(): void
     }
 
     $terms = [
-        'news-media'    => 'News & Media',
-        'press-release' => 'Press Release',
-        'insights'      => 'Insights',
-        'events'        => 'Events',
-        'videos'        => 'Videos',
-        'iris-id-talk'  => 'Iris ID Talk',
-        'case-studies'  => 'Case Studies',
-        'webinars'      => 'Webinars',
-        'literature'    => 'Literature',
-        'data-sheets'   => 'Data Sheets',
-        'tip-sheets'    => 'Tip Sheets',
+        'news-media'              => 'News & Media',
+        'press-release'           => 'Press Release',
+        'insights'                => 'Insights',
+        'events'                  => 'Events',
+        'videos'                  => 'Videos',
+        'iris-id-talk'            => 'Iris ID Talk',
+        'case-studies'            => 'Case Studies',
+        'webinars'                => 'Webinars',
+        'literature'              => 'Literature',
+        'data-sheets'             => 'Data Sheets',
+        'tip-sheets'              => 'Tip Sheets',
+        'use-cases-white-papers'  => 'Use Cases & White Papers',
     ];
 
     foreach ($terms as $slug => $name) {
@@ -172,6 +174,33 @@ function irisid_seed_resource_type_terms(): void
     }
 
     update_option('irisid_resource_types_seeded', 1, false);
+}
+
+/**
+ * Ensure File literature terms exist even after the one-shot seed flag is set.
+ * Editors may delete terms; these board slugs are required by the frontend.
+ */
+function irisid_ensure_file_resource_type_terms(): void
+{
+    $terms = [
+        'data-sheets'            => 'Data Sheets',
+        'tip-sheets'             => 'Tip Sheets',
+        'use-cases-white-papers' => 'Use Cases & White Papers',
+    ];
+    foreach ($terms as $slug => $name) {
+        if (!term_exists($slug, 'resource_type')) {
+            $result = wp_insert_term($name, 'resource_type', ['slug' => $slug]);
+            if (is_wp_error($result) || empty($result['term_id'])) {
+                continue;
+            }
+            update_term_meta((int) $result['term_id'], 'irisid_layout', 'file');
+            continue;
+        }
+        $term = get_term_by('slug', $slug, 'resource_type');
+        if ($term instanceof WP_Term && !get_term_meta($term->term_id, 'irisid_layout', true)) {
+            update_term_meta($term->term_id, 'irisid_layout', 'file');
+        }
+    }
 }
 
 /** @return array<string, string> */

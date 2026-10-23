@@ -36,7 +36,8 @@ $live_base = 'https://irisid.com/wp-json/wp/v2';
 $boards = [
     'news-media'    => ['live' => 'news', 'label' => 'News & Media'],
     'press-release' => ['live' => 'press-release', 'label' => 'Press Release'],
-    'insights'      => ['live' => 'blog', 'label' => 'Insights'],
+    // CMS taxonomy slug is `blog` (frontend resourceType). Public URLs stay under /resources/insights/.
+    'blog'          => ['live' => 'blog', 'label' => 'Blog'],
     'videos'        => ['live' => 'videos', 'label' => 'Videos'],
     'iris-id-talk'  => ['live' => 'iris-id-radio', 'label' => 'Iris ID Talk'],
     'case-studies'  => ['live' => 'irisaccess-in-action', 'label' => 'Case Studies'],
