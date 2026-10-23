@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISID_HEADLESS_VERSION', '1.1.0');
+define('IRISID_HEADLESS_VERSION', '1.1.1');
 define('IRISID_HEADLESS_DIR', __DIR__ . '/irisid-headless');
 
 require_once IRISID_HEADLESS_DIR . '/includes/cpt-taxonomies.php';
@@ -24,6 +24,7 @@ require_once IRISID_HEADLESS_DIR . '/includes/graphql-upload.php';
 require_once IRISID_HEADLESS_DIR . '/includes/gf-captcha-headless.php';
 require_once IRISID_HEADLESS_DIR . '/includes/content-admin.php';
 require_once IRISID_HEADLESS_DIR . '/includes/resource-typography.php';
+require_once IRISID_HEADLESS_DIR . '/includes/local-avatar.php';
 
 add_action('init', 'irisid_register_content_types', 5);
 add_action('acf/init', 'irisid_register_acf_options_pages');

@@ -102,7 +102,7 @@ WP Admin → **Site Settings**:
 ### H. 초기 콘텐츠 시드 (slug = live URL)
 
 **Product** (18) — slug는 [CONTENT-MODEL §3-1](CONTENT-MODEL.md) 참조, `product_type` term 할당:
-- HW: `irisaccess-ia1000`, `irisaccess-it100`, `ibar-600e`, `icam-d2000`, `icam-td200`, `icam-t10`, `icam-t20`, `icam-m300`, `icam-r100-series`, `icam-r200`, `ou500`
+- HW: `irisaccess-ia1000`, `irisaccess-it100`, `ibar-600e`, `icam-d2000`, `icam-td200`, `icam-t10`, `icam-t20`, `icam-m300`, `icam-r100-series`, `ibar-200`, `ou500`
 - SW: `iams`, `itms`, `itms-cloud`, `idata-eac`, `idata-iris-sdk`, `irisaccelerator`, `irisaccelerator-m`
 
 **Solution** (9) — slug: `access-control`, `time-attendance`, … ([§3-2](CONTENT-MODEL.md))

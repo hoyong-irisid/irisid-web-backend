@@ -57,7 +57,7 @@
 ### 3-1. 실제 제품 목록 (URL 보존 대상)
 
 **Hardware** `/products/hardware-products/{slug}/`
-`irisaccess-ia1000`, `irisaccess-it100`, `ibar-600e`, `icam-d2000`, `icam-td200`, `icam-t10`, `icam-t20`, `icam-m300`, `icam-r100-series`, `icam-r200`, `ou500`
+`irisaccess-ia1000`, `irisaccess-it100`, `ibar-600e`, `icam-d2000`, `icam-td200`, `icam-t10`, `icam-t20`, `icam-m300`, `icam-r100-series`, `ibar-200`, `ou500`
 
 **Software** `/products/software-products/{slug}/`
 `iams`, `itms`, `itms-cloud`, `idata-eac`, `idata-iris-sdk`, `irisaccelerator`, `irisaccelerator-m`

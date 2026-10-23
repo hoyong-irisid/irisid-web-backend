@@ -10,7 +10,9 @@ WP_ROOT="${WP_ROOT:?Set WP_ROOT e.g. /home/irisid5/public_html/cms}"
 
 echo "Deploying mu-plugin to ${WP_SSH}:${WP_ROOT}/wp-content/mu-plugins/"
 
-rsync -avz --delete \
+# Do not use --delete: cms may keep extra mu-plugins (e.g. rate-limit / hide-users)
+# that are not always mirrored in this repo.
+rsync -avz \
   "${REPO_ROOT}/wordpress/mu-plugins/" \
   "${WP_SSH}:${WP_ROOT}/wp-content/mu-plugins/"
 
