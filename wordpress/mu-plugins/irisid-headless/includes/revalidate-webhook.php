@@ -86,10 +86,14 @@ function irisid_revalidate_paths_for_post(WP_Post $post): array
             $paths = [];
             $terms = get_the_terms($post->ID, 'resource_type');
             $map = irisid_resource_type_public_board_map();
+            $isDataSheet = false;
             if (is_array($terms)) {
                 foreach ($terms as $term) {
                     if (!($term instanceof WP_Term)) {
                         continue;
+                    }
+                    if ($term->slug === 'data-sheets') {
+                        $isDataSheet = true;
                     }
                     $board = $map[$term->slug] ?? $term->slug;
                     if ($board === '') {
@@ -105,10 +109,22 @@ function irisid_revalidate_paths_for_post(WP_Post $post): array
             }
             $paths[] = '/resources/';
             $paths[] = '/resources/newsroom/';
+            // Product pages embed matching data sheets – purge those URLs too.
+            if ($isDataSheet) {
+                foreach (irisid_revalidate_related_product_paths($post->ID) as $productPath) {
+                    $paths[] = $productPath;
+                }
+            }
             return array_values(array_unique($paths));
 
         case 'product':
-            return ["/products/hardware-products/{$slug}/", '/products/', '/products/hardware-products/'];
+            return [
+                "/products/hardware-products/{$slug}/",
+                "/products/software-products/{$slug}/",
+                '/products/',
+                '/products/hardware-products/',
+                '/products/software-products/',
+            ];
 
         case 'solution':
             return ["/solutions/{$slug}/", '/solutions/'];
@@ -149,6 +165,56 @@ function irisid_send_revalidate(WP_Post $post): void
             'paths' => $paths,
         ]),
     ]);
+}
+
+/**
+ * Public product detail paths for ACF related_products on a resource.
+ *
+ * @return list<string>
+ */
+function irisid_revalidate_related_product_paths(int $resourceId): array
+{
+    $related = get_field('related_products', $resourceId);
+    if (!is_array($related) || $related === []) {
+        return [];
+    }
+
+    $paths = [];
+    foreach ($related as $item) {
+        $product = null;
+        if ($item instanceof WP_Post) {
+            $product = $item;
+        } elseif (is_numeric($item)) {
+            $product = get_post((int) $item);
+        } elseif (is_array($item) && isset($item['ID'])) {
+            $product = get_post((int) $item['ID']);
+        }
+        if (!($product instanceof WP_Post) || $product->post_type !== 'product') {
+            continue;
+        }
+        $productSlug = $product->post_name;
+        if ($productSlug === '') {
+            continue;
+        }
+        $types = get_the_terms($product->ID, 'product_type');
+        $isSoftware = false;
+        if (is_array($types)) {
+            foreach ($types as $type) {
+                if ($type instanceof WP_Term && strpos($type->slug, 'software') !== false) {
+                    $isSoftware = true;
+                    break;
+                }
+            }
+        }
+        $paths[] = $isSoftware
+            ? "/products/software-products/{$productSlug}/"
+            : "/products/hardware-products/{$productSlug}/";
+        // Purge both trees when type is ambiguous – cheap and keeps HW/SW moves safe.
+        $paths[] = "/products/hardware-products/{$productSlug}/";
+        $paths[] = "/products/software-products/{$productSlug}/";
+    }
+
+    return array_values(array_unique($paths));
 }
 
 function irisid_revalidate_tag_for_post(WP_Post $post): string
